@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"github.com/SwampPear/argo/argo/core/settings"
+	"github.com/SwampPear/argo/pkg/settings"
 )
 
 type App struct {

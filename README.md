@@ -19,4 +19,4 @@ tokio for requests?
 - output trace log
 
 
-- get general knowledge of writeup structure
+- get general knowledge of writeup structure, especially initial vectorf
