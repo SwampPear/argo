@@ -29,7 +29,7 @@
   color: #808594;
   cursor: pointer;
   font-size: .9rem;
-  margin-left: 0.375rem;
+  margin-left: 0.5rem;
   padding: .375rem;
   text-align: left;
   max-width: 256px;
@@ -41,5 +41,5 @@
 }
 
 .projectSelectButton:hover {
-  border: 1px solid #505563;
+  border: 1px solid #31343d;
 }

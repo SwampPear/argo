@@ -1,7 +1,24 @@
 .container {
-  background: #34353e;
-  border: 1px solid #505563;
+  background: #2f2f36;
+  border: 1px solid #31343d;
   border-radius: .25rem;
-  height: calc(100vh - 3.915rem);
-  margin: .375rem
+  height: calc(100vh - 3.5rem);
+  margin: 0 .375rem .375rem .375rem
+}
+
+.button {
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: #808594;
+  cursor: pointer;
+  display: flex;
+  font-size: .9rem;
+  margin: 0.25rem 0.25rem 0 0.25rem;
+  padding: .5rem;
+  width: calc(100% - .5rem);
+}
+
+.button:hover {
+  background: #31343d;;
 }

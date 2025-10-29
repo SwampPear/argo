@@ -1,4 +1,5 @@
 import './App.css'
+import Content from './components/content/Content'
 import SideMenu from './components/menus/side/Menu'
 import TopMenu from './components/menus/top/Menu'
 
@@ -13,10 +14,11 @@ const App = () => {
     */
 
     return (
-      <div id="App">
+      <div id="app">
         <TopMenu/>
-        <div id="Container">
+        <div id="container">
           <SideMenu/>
+          <Content/>
         </div>
       </div>
     )

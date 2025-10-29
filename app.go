@@ -9,7 +9,7 @@ import (
 type App struct {
 	ctx 			 context.Context
 	projectDir string
-	settings	 Settings
+	settings	 settings.Settings
 }
 
 func NewApp() *App {
@@ -18,9 +18,7 @@ func NewApp() *App {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-
-	// initialize settings
-	settings = Settings{}
+	a.settings = settings.Default()
 
 }
 
