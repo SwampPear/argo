@@ -1,3 +1,40 @@
 .container {
   color: #808594;
 }
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+th {  
+  background-color: #35353e;
+  border-left: 1px solid #37373f;
+  border-right: 1px solid #37373f;
+  border-bottom: 1px solid #37373f;
+  margin-left: -1px;
+}
+
+th:first-child {
+  border-left: none;
+  border-right: 1px solid #37373f;
+}
+
+th:last-child {
+  border-left: 1px solid #37373f;
+  border-right: none;
+}
+
+td {  
+  border-bottom: 1px solid #37373f;
+  margin-left: -1px;
+  padding: 0.25rem;
+}
+
+.cellScroll {
+  max-width: 100%;              /* fit the cell */
+  overflow-x: auto;             /* per-cell horizontal scroll */
+  white-space: nowrap;          /* keep line unwrapped, enable scroll */
+}
