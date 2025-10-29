@@ -1,0 +1,39 @@
+.container {
+  display: flex;
+  height: 3rem;
+  width: 100vw;
+}
+
+.brandContainer {
+  height: 3rem;
+  width: 256px
+}
+
+.projectContainer {
+  align-items: center;
+  display: flex;
+  height: 3rem;
+  margin: 0 .75rem;
+}
+
+.projectIcon {
+  fill: #808594;
+  height: 1rem;
+  width: 1rem;
+}
+
+.projectSelectButton {
+  background: transparent;
+  border: 1px solid #34353e;
+  border-radius: .25rem;
+  color: #808594;
+  font-size: .9rem;
+  margin-left: 0.375rem;
+  padding: .375rem;
+  text-align: left;
+  width: 192px;
+}
+
+.projectSelectButton:hover {
+  border: 1px solid #505563;
+}

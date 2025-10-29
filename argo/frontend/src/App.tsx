@@ -1,27 +1,24 @@
-import {useState} from 'react';
-import logo from './assets/images/logo-universal.png';
-import './App.css';
-import {Greet} from "../wailsjs/go/main/App";
+import './App.css'
+import SideMenu from './components/menus/side/Menu'
+import TopMenu from './components/menus/top/Menu'
 
-function App() {
-    const [resultText, setResultText] = useState("Please enter your name below 👇");
-    const [name, setName] = useState('');
-    const updateName = (e: any) => setName(e.target.value);
+
+const App = () => {
+    /*
     const updateResultText = (result: string) => setResultText(result);
 
     function greet() {
-        Greet(name).then(updateResultText);
+       Greet(name).then(updateResultText);
     }
+    */
 
     return (
-        <div id="App">
-            <img src={logo} id="logo" alt="logo"/>
-            <div id="result" className="result">{resultText}</div>
-            <div id="input" className="input-box">
-                <input id="name" className="input" onChange={updateName} autoComplete="off" name="input" type="text"/>
-                <button className="btn" onClick={greet}>Greet</button>
-            </div>
+      <div id="App">
+        <TopMenu/>
+        <div id="Container">
+          <SideMenu/>
         </div>
+      </div>
     )
 }
 

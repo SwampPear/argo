@@ -1,0 +1,7 @@
+.container {
+  background: #34353e;
+  border: 1px solid #505563;
+  border-radius: .25rem;
+  height: calc(100vh - 3.915rem);
+  margin: .375rem
+}
