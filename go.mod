@@ -1,4 +1,4 @@
-module argo
+module github.com/SwampPear/argo
 
 go 1.24.4
 

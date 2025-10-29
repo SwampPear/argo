@@ -1,6 +1,6 @@
 package main
 
-import "argo/cmd"
+import "github.com/SwampPear/argo/cmd"
 
 func main() { 
 	cmd.Execute()

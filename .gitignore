@@ -1,2 +1,5 @@
-Cargo.lock
-target/
+build/bin
+node_modules
+frontend/dist
+build/
+dist/
