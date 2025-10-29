@@ -1,4 +1,4 @@
-module argo
+module github.com/SwampPear/argo
 
 go 1.23
 
@@ -35,3 +35,4 @@ require (
 )
 
 // replace github.com/wailsapp/wails/v2 v2.10.2 => /Users/michaelvaden/go/pkg/mod
+// replace github.com/SwampPear/argo => ../argo

@@ -27,11 +27,17 @@
   border: 1px solid #34353e;
   border-radius: .25rem;
   color: #808594;
+  cursor: pointer;
   font-size: .9rem;
   margin-left: 0.375rem;
   padding: .375rem;
   text-align: left;
-  width: 192px;
+  max-width: 256px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;    /* trick to push the ellipsis on the left side */  /* :contentReference[oaicite:0]{index=0} */
+  text-align: left;  /* keep the text aligned left (despite rtl) */
 }
 
 .projectSelectButton:hover {

@@ -2,26 +2,38 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/SwampPear/argo/argo/core/settings"
 )
 
-// App struct
 type App struct {
-	ctx context.Context
+	ctx 			 context.Context
+	projectDir string
+	settings	 Settings
 }
 
-// NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{}
 }
 
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+
+	// initialize settings
+	settings = Settings{}
+
 }
 
-// Greet returns a greeting for the given name
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
+func (a *App) SelectProjectDirectory() (string, error) {
+  dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+    Title: "Select Project Directory",
+  })
+
+  if err != nil {
+    return "", err
+  }
+
+  a.projectDir = dir
+	
+  return dir, nil
 }
