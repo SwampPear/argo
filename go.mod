@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/spf13/cobra v1.10.1
 	github.com/wailsapp/wails/v2 v2.10.2
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

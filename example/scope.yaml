@@ -1,3 +1,8 @@
+llm:
+  provider: "local"
+  allow_internet_access: false
+  max_context_tokens: 32000
+
 program:
   client: "acme"
   contact: "security@acme.shop"
@@ -5,11 +10,11 @@ program:
 
 rules:
   allowed_http_methods: [GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE]
-  destructive_actions_forbidden: true # never run exploits that modify data at scale
-  auth_bruteforce_forbidden: true     # never run expnesive brute force operations
-  dos_forbidden: true                 # includes rate abuse and resource exhaustion
-  captcha_solving: "manual_only"      # never auto-bypass unless program allows
-  max_request_body_kb: 256            # guard against oversized payloads
+  destructive_actions_forbidden: true
+  auth_bruteforce_forbidden: true
+  dos_forbidden: true
+  captcha_policy: "manual"
+  max_request_body_kb: 256
 
 compliance:
   safe_harbor: true
@@ -26,33 +31,33 @@ rate_limits:
     requests_per_minute: 60
     concurrent_requests: 5
   per_host:
-    "app.acme.shop":
+    - host: "app.acme.shop"
       requests_per_minute: 20
       concurrent_requests: 2
-    "api.acme.shop":
+    - host: "api.acme.shop"
       requests_per_minute: 30
       concurrent_requests: 3
 
 assets:
   in_scope:
-    - type: web
+    - mode: web
       hostname: app.acme.shop
       paths: ["/", "/account/**", "/orders/**"]
-    - type: api
+    - mode: api
       hostname: api.acme.shop
       schemes: ["https"]
       ports: [443]
       paths: ["/v1/**"]
-    - type: mobile-api
+    - mode: mobile-api
       hostname: m.acme.shop
       paths: ["/v2/**"]
   out_of_scope:
-    - type: third_party
-      description: Payment processor pages hosted on pay.example.com
-    - type: marketing
+    - mode: third_party
+      description: "Payment processor pages hosted on pay.example.com"
+    - mode: marketing
       hostname: www.acme.shop
       paths: ["/blog/**", "/careers/**"]
-    - type: support
+    - mode: support
       hostname: help.acme.shop
 
 authentication:
@@ -61,14 +66,7 @@ authentication:
   accounts:
     - username: tester1@acme.shop
       role: customer
-      password_secret_ref: VAULT:acme/tester1
+      password: "VAULT:acme/tester1"
     - username: tester2@acme.shop
       role: customer
-      password_secret_ref: VAULT:acme/tester2
-  mfa:
-    type: totp
-    secret_ref: VAULT:acme/totp-shared
-  session_policies:
-    reuse_sessions: false          # fresh login per run unless explicitly allowed
-    logout_after_tests: true
-
+      password: "VAULT:acme/tester2"

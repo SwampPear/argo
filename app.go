@@ -35,3 +35,14 @@ func (a *App) SelectProjectDirectory() (string, error) {
 	
   return dir, nil
 }
+
+func (a *App) LoadYAMLSettings(path string) (settings.Settings, error) {
+	cfg, err := settings.LoadYAML(path)
+	if err != nil {
+		return cfg, err
+	}
+
+	a.settings = cfg
+
+	return cfg, err
+}

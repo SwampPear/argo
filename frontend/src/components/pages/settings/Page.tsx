@@ -1,9 +1,12 @@
+import { useAppStore } from '../../../state/useAppStore'
 import styles from './Page.module.css'
 
 const Content = () => {
+  const { settings } = useAppStore()
+
   return (
     <div className={styles.container}>
-      asdf
+      {JSON.stringify(settings, null, '\t')}
     </div>
   )
 }

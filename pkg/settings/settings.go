@@ -1,22 +1,15 @@
 package settings
 
-// llm
-type LLMSettings struct {
-	Provider            string
-	AllowInternetAccess bool
-	MaxContextTokens    int
-}
+import (
+	"bytes"
+	"fmt"
+	"os"
+	"io"
 
-// program
-type ScopeProgramSettings struct {
-	Client  string
-	Contact string
-	Notes   string
-}
+	"gopkg.in/yaml.v3"
+)
 
-// scope
 type HTTPMethod int
-
 const (
 	HTTPGet HTTPMethod = iota
 	HTTPHead
@@ -27,95 +20,177 @@ const (
 	HTTPDelete
 )
 
+var httpMethodFromStr = map[string]HTTPMethod{
+	"get":     HTTPGet,
+	"head":    HTTPHead,
+	"options": HTTPOptions,
+	"post":    HTTPPost,
+	"put":     HTTPPut,
+	"patch":   HTTPPatch,
+	"delete":  HTTPDelete,
+}
+var httpMethodToStr = []string{"GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"}
+
+func (m HTTPMethod) String() string {
+	if int(m) >= 0 && int(m) < len(httpMethodToStr) {
+		return httpMethodToStr[m]
+	}
+	return "UNKNOWN"
+}
+
+func (m *HTTPMethod) UnmarshalYAML(node *yaml.Node) error {
+	// accept either string (case-insensitive) or integer
+	if node.Kind != yaml.ScalarNode {
+		return fmt.Errorf("HTTPMethod must be a scalar")
+	}
+	var asStr string
+	if err := node.Decode(&asStr); err == nil {
+		if v, ok := httpMethodFromStr[lower(asStr)]; ok {
+			*m = v
+			return nil
+		}
+		return fmt.Errorf("invalid HTTPMethod %q", asStr)
+	}
+	var asInt int
+	if err := node.Decode(&asInt); err == nil {
+		*m = HTTPMethod(asInt)
+		return nil
+	}
+	return fmt.Errorf("invalid HTTPMethod value")
+}
+
 type CaptchaPolicy int
 
 const (
 	CaptchaManual CaptchaPolicy = iota
 )
 
-type ScopeRulesSettings struct {
-	AllowedHTTPMethods        []HTTPMethod
-	DestructiveActionsForbid  bool // never run exploits that modify data at scale
-	AuthBruteforceForbid      bool // never run expensive brute force operations
-	DoSForbid                 bool // includes rate abuse and resource exhaustion
-	CaptchaPolicy             CaptchaPolicy
-	MaxRequestBodyKB          int // guard against oversized payloads
+func (c *CaptchaPolicy) UnmarshalYAML(node *yaml.Node) error {
+	if node.Kind != yaml.ScalarNode {
+		return fmt.Errorf("CaptchaPolicy must be a scalar")
+	}
+	var s string
+	if err := node.Decode(&s); err == nil {
+		switch lower(s) {
+		case "manual", "captcha_manual", "0":
+			*c = CaptchaManual
+			return nil
+		default:
+			return fmt.Errorf("invalid CaptchaPolicy %q", s)
+		}
+	}
+	var i int
+	if err := node.Decode(&i); err == nil {
+		*c = CaptchaPolicy(i)
+		return nil
+	}
+	return fmt.Errorf("invalid CaptchaPolicy value")
 }
 
-// compliance
+func lower(s string) string {
+	// tiny helper to avoid importing strings for one call
+	b := []byte(s)
+	for i := range b {
+		if 'A' <= b[i] && b[i] <= 'Z' {
+			b[i] = b[i] + 32
+		}
+	}
+	return string(b)
+}
+
+// ====== Structs with YAML tags ======
+
+type LLMSettings struct {
+	Provider            string `yaml:"provider"`
+	AllowInternetAccess bool   `yaml:"allow_internet_access"`
+	MaxContextTokens    int    `yaml:"max_context_tokens"`
+}
+
+type ScopeProgramSettings struct {
+	Client  string `yaml:"client"`
+	Contact string `yaml:"contact"`
+	Notes   string `yaml:"notes"`
+}
+
+type ScopeRulesSettings struct {
+	AllowedHTTPMethods       []HTTPMethod  `yaml:"allowed_http_methods"`
+	DestructiveActionsForbid bool         `yaml:"destructive_actions_forbidden"`
+	AuthBruteforceForbid     bool         `yaml:"auth_bruteforce_forbidden"`
+	DoSForbid                bool         `yaml:"dos_forbidden"`
+	CaptchaPolicy            CaptchaPolicy `yaml:"captcha_policy"`
+	MaxRequestBodyKB         int          `yaml:"max_request_body_kb"`
+}
+
 type ComplianceLoggingSettings struct {
-	ImmutableAuditLog     bool
-	IncludeRequestBodies  bool
-	IncludeResponseBodies bool
+	ImmutableAuditLog     bool `yaml:"immutable_audit_log"`
+	IncludeRequestBodies  bool `yaml:"include_request_bodies"`
+	IncludeResponseBodies bool `yaml:"include_response_bodies"`
 }
 
 type ComplianceNotificationSettings struct {
-	OnViolation  []string
-	OnCompletion []string
+	OnViolation  []string `yaml:"on_violation"`
+	OnCompletion []string `yaml:"on_completion"`
 }
 
 type ComplianceSettings struct {
-	SafeHarbor    bool
-	Logging       ComplianceLoggingSettings
-	Notifications ComplianceNotificationSettings
+	SafeHarbor    bool                           `yaml:"safe_harbor"`
+	Logging       ComplianceLoggingSettings      `yaml:"logging"`
+	Notifications ComplianceNotificationSettings `yaml:"notifications"`
 }
 
-// rate limits
 type RateLimitGlobal struct {
-	RequestsPerMinute  uint
-	ConcurrentRequests uint
+	RequestsPerMinute  uint `yaml:"requests_per_minute"`
+	ConcurrentRequests uint `yaml:"concurrent_requests"`
 }
 
 type PerHost struct {
-	Host               string
-	RequestsPerMinute  uint
-	ConcurrentRequests uint
+	Host               string `yaml:"host"`
+	RequestsPerMinute  uint   `yaml:"requests_per_minute"`
+	ConcurrentRequests uint   `yaml:"concurrent_requests"`
 }
 
 type RateLimitSettings struct {
-	Global  RateLimitGlobal
-	PerHost []PerHost
+	Global  RateLimitGlobal `yaml:"global"`
+	PerHost []PerHost       `yaml:"per_host"`
 }
 
-// assets
 type Asset struct {
-	Mode        string   // e.g., "web", "api", "mobile-api"
-	Hostname    string
-	Paths       []string
-	Ports       []uint
-	Schemes     []string // e.g., ["https"]
-	Description string
+	Mode        string   `yaml:"mode"` // e.g., "web", "api", "mobile-api"
+	Hostname    string   `yaml:"hostname"`
+	Paths       []string `yaml:"paths"`
+	Ports       []uint   `yaml:"ports"`
+	Schemes     []string `yaml:"schemes"`
+	Description string   `yaml:"description"`
 }
 
 type AssetSettings struct {
-	InScope     []Asset
-	OutOfScope  []Asset
+	InScope    []Asset `yaml:"in_scope"`
+	OutOfScope []Asset `yaml:"out_of_scope"`
 }
 
-// authentication
 type AuthenticationAccount struct {
-	Username string
-	Role     string
-	Password string
+	Username string `yaml:"username"`
+	Role     string `yaml:"role"`
+	Password string `yaml:"password"`
 }
 
 type AuthenticationSettings struct {
-	Allowed               bool
-	TestAccountsProvided  bool
-	Accounts              []AuthenticationAccount
+	Allowed              bool                   `yaml:"allowed"`
+	TestAccountsProvided bool                   `yaml:"test_accounts_provided"`
+	Accounts             []AuthenticationAccount `yaml:"accounts"`
 }
 
 type Settings struct {
-	LLM            LLMSettings
-	Program        ScopeProgramSettings
-	Rules          ScopeRulesSettings
-	Compliance     ComplianceSettings
-	RateLimits     RateLimitSettings
-	Assets         AssetSettings
-	Authentication AuthenticationSettings
+	LLM            LLMSettings            `yaml:"llm"`
+	Program        ScopeProgramSettings   `yaml:"program"`
+	Rules          ScopeRulesSettings     `yaml:"rules"`
+	Compliance     ComplianceSettings     `yaml:"compliance"`
+	RateLimits     RateLimitSettings      `yaml:"rate_limits"`
+	Assets         AssetSettings          `yaml:"assets"`
+	Authentication AuthenticationSettings `yaml:"authentication"`
 }
 
-// Default returns sensible baseline settings.
+// Default as you provided (unchanged)
 func Default() Settings {
 	return Settings{
 		LLM: LLMSettings{
@@ -123,11 +198,7 @@ func Default() Settings {
 			AllowInternetAccess: false,
 			MaxContextTokens:    32000,
 		},
-		Program: ScopeProgramSettings{
-			Client:  "",
-			Contact: "",
-			Notes:   "",
-		},
+		Program: ScopeProgramSettings{},
 		Rules: ScopeRulesSettings{
 			AllowedHTTPMethods: []HTTPMethod{
 				HTTPGet, HTTPHead, HTTPOptions, HTTPPost, HTTPPut, HTTPPatch, HTTPDelete,
@@ -152,13 +223,43 @@ func Default() Settings {
 				RequestsPerMinute:  60,
 				ConcurrentRequests: 5,
 			},
-			PerHost: nil,
 		},
-		Assets: AssetSettings{},
-		Authentication: AuthenticationSettings{
-			Allowed:              true,
-			TestAccountsProvided: true,
-			Accounts: nil,
-		},
+		Assets:         AssetSettings{},
+		Authentication: AuthenticationSettings{Allowed: true, TestAccountsProvided: true},
 	}
+}
+
+
+// LoadYAML overlays file values onto Default() so missing keys keep defaults.
+func LoadYAML(path string) (Settings, error) {
+	cfg := Default()
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return cfg, fmt.Errorf("read %s: %w", path, err)
+	}
+
+	dec := yaml.NewDecoder(bytes.NewReader(data))
+	dec.KnownFields(true) // strict: error on unknown keys
+	if err := dec.Decode(&cfg); err != nil {
+		return cfg, fmt.Errorf("parse %s: %w", path, err)
+	}
+	return cfg, nil
+}
+
+// ---- tiny helper to use yaml.Decoder with []byte without importing bytes in user code
+
+type byteReader struct{ b []byte; i int }
+
+func bytesReader(b []byte) *yaml.Decoder {
+	// emulate io.Reader for yaml.Decoder
+	return yaml.NewDecoder(&byteReader{b: b})
+}
+func (r *byteReader) Read(p []byte) (int, error) {
+	if r.i >= len(r.b) {
+		return 0, io.EOF
+	}
+	n := copy(p, r.b[r.i:])
+	r.i += n
+	return n, nil
 }
