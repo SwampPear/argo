@@ -41,5 +41,46 @@
 }
 
 .projectSelectButton:hover {
-  border: 1px solid #31343d;
+  border: 1px solid #515767;
+}
+
+.flexGrow {
+  height: 1rem;
+  flex: 1;
+}
+
+.actionButtonContainer,
+.pageSelectionContainer {
+  align-items: center;
+  display: flex;
+}
+
+.pageSelectionContainer {
+  margin-right: .355rem;
+}
+
+.pageSelectionButton {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: .25rem;
+  cursor: pointer;
+  display: flex;
+  padding: 0;
+  height: 1.75rem;
+  margin-left: .25rem;
+  justify-content: center;
+  width: 1.75rem;
+}
+
+.pageSelectionButton:hover {
+  border: 1px solid #34353e;
+}
+
+.pageSelectionButtonIcon {
+  fill: #808594;
+  height: 1rem;
+  width: 1rem;
+  padding: 0;
+  margin: 0 0 0 .1rem;
 }
