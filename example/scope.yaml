@@ -33,15 +33,6 @@ rate_limits:
       requests_per_minute: 30
       concurrent_requests: 3
 
-crawling:
-  start_urls:
-    - "https://app.acme.shop/"
-  respect_robots_txt: true
-  max_depth: 3
-  same_origin_only: true
-  include_patterns: ["**/account/**", "**/orders/**"]
-  exclude_patterns: ["**/logout", "**/delete**"]
-
 assets:
   in_scope:
     - type: web

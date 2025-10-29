@@ -1,4 +1,4 @@
-import styles from './Content.module.css'
+import styles from './Page.module.css'
 
 const Content = () => {
   return (
