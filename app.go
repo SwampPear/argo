@@ -5,39 +5,77 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"os/exec"
+	"os"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/SwampPear/argo/pkg/settings"
+	"github.com/SwampPear/argo/pkg/tools"
 	"github.com/rs/xid"
 )
 
+// Wails app.
 type App struct {
-	ctx 			 context.Context
-	projectDir string
-	settings	 settings.Settings
-	mu sync.Mutex
-  active map[string]context.CancelFunc
+	ctx 			 context.Context							 // Wails app context
+	projectDir string												 // project directory
+	settings	 settings.Settings						 // app settings gathered from scope.yaml
+	mu 				 sync.Mutex										 // protects projectDir, settings, and active
+  active 		 map[string]context.CancelFunc // maps log event to cancel function
+	pw 				 tools.PW											 // Playwright integration
 }
 
+// Log events.
 type LogEvent struct {
-  Timestamp string `json:"timestamp"`
-  RunID     string `json:"run_id"`
-  StepID    string `json:"step_id"`
-  Module    string `json:"module"`
-  Action    string `json:"action"`
-  Target    string `json:"target"`
-  Status    string `json:"status"`
-  Duration  string `json:"duration"`
+	Step			 int		 `json:"step"`
+	ID    		 string	 `json:"id"`
+  Timestamp  string  `json:"timestamp"`
+  Module     string  `json:"module"`
+  Action     string  `json:"action"`
+  Target     string  `json:"target"`
+  Status     string  `json:"status"`
+  Duration   string  `json:"duration"`
   Confidence float64 `json:"confidence"`
-  Summary   string `json:"summary"`
+  Summary    string  `json:"summary"`
 }
 
+// Creates a new app.
 func NewApp() *App {
 	return &App{}
 }
 
+// App initialization.
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.settings = settings.Default()
+}
+
+// Finishes a process determined by log id.
+func (a *App) finish(id string) {
+	a.mu.Lock()
+	if c, ok := a.active[id]; ok {
+		c()                    	// cancel the context
+		delete(a.active, id) // remove from map
+	}
+	a.mu.Unlock()
+}
+
+func (a *App) StartInteractiveBrowser(url string) error {
+  cmd := exec.Command("node", "tools/playwright/pw_runner.mjs", url)
+  cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+
+  // keep child alive while app runs
+  return cmd.Start() // don't Wait(); Node stays alive until user closes the browser
+}
+
+func (a *App) StopInteractiveBrowser(id string) bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if c, ok := a.active[id]; ok {
+		c()
+		delete(a.active, id)
+		return true
+	}
+
+	return false
 }
 
 func (a *App) SelectProjectDirectory() (string, error) {
@@ -70,7 +108,7 @@ func (a *App) Run() (string, error) {
   cfg := a.settings
   a.mu.Unlock()
 
-  runID := time.Now().UTC().Format("20060102T150405Z") + "-" + xid.New().String()
+  runID := xid.New().String()
 
   ctx, cancel := context.WithCancel(context.Background())
   a.mu.Lock()
@@ -89,18 +127,16 @@ func (a *App) Cancel(runID string) {
 }
 
 func (a *App) emit(ev LogEvent) {
-  // Wails event to TS: listen via EventsOn('log:event', ...)
   runtime.EventsEmit(a.ctx, "log:event", ev)
 }
 
-func (a *App) runPipeline(ctx context.Context, runID string, cfg settings.Settings) {
+func (a *App) runPipeline(ctx context.Context, id string, cfg settings.Settings) {
   start := time.Now()
   step := 0
   log := func(phase, module, action, target, status string, conf float64, d time.Duration, summary string) {
     a.emit(LogEvent{
-      Timestamp: time.Now().Format(time.RFC3339),
-      RunID: runID, StepID: fmt.Sprintf("step-%03d", step), Module: module,
-      Action: action, Target: target, Status: status, Duration: d.String(), Confidence: conf, Summary: summary,
+      Step: step, ID: id, Timestamp: time.Now().Format(time.RFC3339), Module: module, Action: action, Target: target, 
+			Status: status, Duration: d.String(), Confidence: conf, Summary: summary,
     })
     step++
   }
@@ -134,14 +170,8 @@ func (a *App) runPipeline(ctx context.Context, runID string, cfg settings.Settin
     log("Triage","LLM","cluster+plan","artifacts", "Error", 0, time.Since(t3), err.Error()); return
   }
   log("Test","Prober","validate-hypotheses","endpoints", "OK", 0.8, time.Since(t3), fmt.Sprintf("%d potential issues", len(findings)))
-
-  // 5) Report draft
-  t4 := time.Now()
-  if err := draftReports(ctx, cfg, runID, findings, log); err != nil {
-    log("Report","LLM","draft","issues", "Error", 0, time.Since(t4), err.Error()); return
-  }
-  log("Report","LLM","draft","issues", "OK", 0.9, time.Since(t4), "Drafts generated")
 	*/
 
   log("Triage","Run","complete","-", "OK", 1, time.Since(start), "Run finished")
+	log("Triage","Run","complete","-", "OK", 1, time.Since(start), "Run finished")
 }

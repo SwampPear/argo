@@ -15,10 +15,11 @@ th {
   border-right: 1px solid #37373f;
   border-bottom: 1px solid #37373f;
   margin-left: -1px;
+  width: 10%;
 }
 
 tr:hover {
-  background: #28282e;
+  background: #36363f;
   cursor: default;
 }
 
@@ -32,10 +33,10 @@ th:last-child {
   border-right: none;
 }
 
-td {  
-  border-bottom: 1px solid #37373f;
+td {
   margin-left: -1px;
   padding: 0.25rem;
+  overflow-x: hidden;
 }
 
 .cellScroll {

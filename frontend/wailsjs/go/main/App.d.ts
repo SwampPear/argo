@@ -9,3 +9,7 @@ export function LoadYAMLSettings(arg1:string):Promise<settings.Settings>;
 export function Run():Promise<string>;
 
 export function SelectProjectDirectory():Promise<string>;
+
+export function StartInteractiveBrowser(arg1:string):Promise<void>;
+
+export function StopInteractiveBrowser(arg1:string):Promise<boolean>;

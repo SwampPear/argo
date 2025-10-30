@@ -17,3 +17,11 @@ export function Run() {
 export function SelectProjectDirectory() {
   return window['go']['main']['App']['SelectProjectDirectory']();
 }
+
+export function StartInteractiveBrowser(arg1) {
+  return window['go']['main']['App']['StartInteractiveBrowser'](arg1);
+}
+
+export function StopInteractiveBrowser(arg1) {
+  return window['go']['main']['App']['StopInteractiveBrowser'](arg1);
+}
