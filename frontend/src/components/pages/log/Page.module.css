@@ -6,7 +6,8 @@ table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  overflow: hidden;
+  overflow-y: scroll;
+  table-layout: fixed;
 }
 
 th {  
@@ -19,7 +20,7 @@ th {
 }
 
 tr:hover {
-  background: #36363f;
+  background: #303039;
   cursor: default;
 }
 
@@ -36,11 +37,19 @@ th:last-child {
 td {
   margin-left: -1px;
   padding: 0.25rem;
-  overflow-x: hidden;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 
-.cellScroll {
-  max-width: 100%;              /* fit the cell */
-  overflow-x: auto;             /* per-cell horizontal scroll */
-  white-space: nowrap;          /* keep line unwrapped, enable scroll */
+td{ -ms-overflow-style:none; scrollbar-width:none; }
+td::-webkit-scrollbar{ display:none; }
+
+td:hover {
+  background: #3b3b50;
+  cursor: default;
+}
+
+td:first-child:hover {
+  background: #303039;
+  cursor: default;
 }

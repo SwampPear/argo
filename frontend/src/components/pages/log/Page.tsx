@@ -23,7 +23,7 @@ interface ICellProps {
 }
 
 const Cell = ({ children, width }: ICellProps) => (
-  <td style={width ? {width: `${width}%`} : {}}>
+  <td style={width ? {width: `${width}%`, maxWidth: `${width}%`} : {}}>
     <div className={styles.cellScroll}>{children}</div>
   </td>
 )
