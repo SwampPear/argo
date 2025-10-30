@@ -17,6 +17,11 @@ th {
   margin-left: -1px;
 }
 
+tr:hover {
+  background: #28282e;
+  cursor: default;
+}
+
 th:first-child {
   border-left: none;
   border-right: 1px solid #37373f;
