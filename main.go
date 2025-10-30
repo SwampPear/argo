@@ -5,6 +5,7 @@ import (
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 )
 
@@ -17,6 +18,10 @@ func main() {
 	err := wails.Run(&options.App{
 		Title:  "Argo",
 		DisableResize: false,
+		WindowStartState: options.Normal, // or options.Maximised on macOS
+    Mac: &mac.Options{
+      TitleBar: mac.TitleBarDefault(), // or mac.TitleBarHiddenInset() – still shows traffic lights
+    },
 		Width:  1024,
 		Height: 768,
 		MinWidth:    400,

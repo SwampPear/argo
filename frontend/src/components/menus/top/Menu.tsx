@@ -1,5 +1,5 @@
 import { LoadYAMLSettings, Run, SelectProjectDirectory, StartInteractiveBrowser } from '../../../../wailsjs/go/main/App'
-import { LogError, LogInfo } from '../../../../wailsjs/runtime'
+import { LogError } from '../../../../wailsjs/runtime'
 import { useAppStore } from '../../../state/useAppStore'
 import styles from './Menu.module.css'
 
@@ -8,15 +8,12 @@ const Menu = () => {
 
   const handleSetProject = async () => {
     const dir = await SelectProjectDirectory()
-    if (dir) {
-      setProjectDir(dir)
-    }
+    dir ?? setProjectDir(dir)
 
     try {
-      const cfg = await LoadYAMLSettings(dir + '/scope.yaml')
+      const cfg = await LoadYAMLSettings(`${dir}/scope.yaml`)
       setSettings(cfg)
     } catch (e) {
-      console.error('Load failed:', e)
       LogError(`LoadYAMLSettings error: ${String(e)}`)
     }
   }
@@ -27,14 +24,8 @@ const Menu = () => {
 
   const handleStartBrowser = async () => {
     try {
-      const ts = Date.now()
-      const artifactsBase = projectDir ? `${projectDir}/artifacts/${ts}` : `/tmp/argo/${ts}`
-
       await StartInteractiveBrowser('https://www.google.com')
-
-      LogInfo(`Playwright started.`)
     } catch (e: any) {
-      console.error('StartInteractiveBrowser failed:', e)
       LogError(`StartInteractiveBrowser error: ${String(e?.message || e)}`)
     }
   }
