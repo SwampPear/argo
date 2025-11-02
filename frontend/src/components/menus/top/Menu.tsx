@@ -8,7 +8,7 @@ const Menu = () => {
 
   const handleSetProject = async () => {
     const dir = await SelectProjectDirectory()
-    dir ?? setProjectDir(dir)
+    setProjectDir(dir ? dir : '')
 
     try {
       const cfg = await LoadYAMLSettings(`${dir}/scope.yaml`)
