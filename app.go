@@ -4,15 +4,13 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 	"os/exec"
 	"bufio"
 	"io"
 	"encoding/json"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/SwampPear/argo/pkg/settings"
-	"github.com/SwampPear/argo/pkg/tools"
-	"github.com/rs/xid"
+	//"github.com/rs/xid"
 )
 
 // Wails app.
@@ -22,7 +20,6 @@ type App struct {
 	settings	 settings.Settings						 // app settings gathered from scope.yaml
 	mu 				 sync.Mutex										 // protects projectDir, settings, and active
   active 		 map[string]context.CancelFunc // maps log event to cancel function
-	pw 				 tools.PW											 // Playwright integration
 	step			 int													 // current log step
 }
 
@@ -63,38 +60,15 @@ func (a *App) streamLogs(r io.Reader) {
 		fmt.Println(line)
 
     var entry LogEvent
-
-		a.mu.Lock()
     if err := json.Unmarshal([]byte(line), &entry); err == nil {
 			fmt.Errorf("Failed to process log")
 		}
 
-    // broadcast to frontend state
+		a.mu.Lock()
 		a.emit(entry)
-
 		a.step++
 		a.mu.Unlock()
   }
-}
-
-func (a *App) runPipeline(ctx context.Context, id string, cfg settings.Settings) {
-	a.mu.Lock()
-  start := time.Now()
-  log := func(phase, module, action, target, status string, conf float64, d time.Duration, summary string) {
-    a.emit(LogEvent{
-      Step: a.step, ID: id, Timestamp: time.Now().Format(time.RFC3339), Module: module, Action: action, Target: target, 
-			Status: status, Duration: d.String(), Confidence: conf, Summary: summary,
-    })
-    a.step++
-  }
-	a.mu.Unlock()
-
-  // 1) Scope/policy check
-  // 2) Recon (e.g., run nuclei safe set)
-  // 3) Browser crawl (Playwright sidecar or HTTP runner)
-
-  log("Triage","Run","complete","-", "OK", 1, time.Since(start), "Run finished")
-	log("Triage","Run","complete","-", "OK", 1, time.Since(start), "Run finished")
 }
 
 // Creates a new app.
@@ -103,11 +77,13 @@ func NewApp() *App {
 }
 
 // Starts an interactive browser.
-func (a *App) StartInteractiveBrowser(url string) error {
-  cmd := exec.Command("node", "./tools/playwright/pw_runner.mjs", url)
+func (a *App) StartInteractiveBrowser() error {
+	// playwright node runner
+  cmd := exec.Command("node", "./tools/playwright/pw_runner.mjs")
+
+	// stream
   stdout, _ := cmd.StdoutPipe()
   stderr, _ := cmd.StderrPipe()
-
   go a.streamLogs(stdout)
   go a.streamLogs(stderr)
 
@@ -129,27 +105,7 @@ func (a *App) StopInteractiveBrowser(id string) bool {
 	return false
 }
 
-// Runs the pipeline.
-func (a *App) Run() (string, error) {
-  a.mu.Lock()
-  cfg := a.settings
-  a.mu.Unlock()
-
-  id := xid.New().String()
-
-  ctx, cancel := context.WithCancel(context.Background())
-
-  a.mu.Lock()
-  if a.active == nil {
-    a.active = make(map[string]context.CancelFunc)
-  }
-  a.active[id] = cancel
-  a.mu.Unlock()
-
-  go a.runPipeline(ctx, id, cfg)
-  return id, nil
-}
-
+// Selects project directory from file folder and sets in app state.
 func (a *App) SelectProjectDirectory() (string, error) {
   dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
     Title: "Select Project Directory",
@@ -166,13 +122,16 @@ func (a *App) SelectProjectDirectory() (string, error) {
   return dir, nil
 }
 
+// Loads settings from YAML file.
 func (a *App) LoadYAMLSettings(path string) (settings.Settings, error) {
   cfg, err := settings.LoadYAML(path)
   if err != nil {
     return settings.Settings{}, fmt.Errorf("load settings: %w", err)
   }
+
   a.mu.Lock()
   a.settings = cfg
   a.mu.Unlock()
+
   return cfg, nil
 }

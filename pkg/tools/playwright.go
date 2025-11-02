@@ -1,4 +1,6 @@
 package tools
+/*
+package tools
 
 import (
 	"bufio"
@@ -34,3 +36,4 @@ func (p PW) StartInteractive(ctx context.Context, args map[string]any) error {
 	_ = cmd.Wait()
 	return ctx.Err()
 }
+*/

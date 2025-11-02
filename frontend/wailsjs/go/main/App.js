@@ -6,16 +6,12 @@ export function LoadYAMLSettings(arg1) {
   return window['go']['main']['App']['LoadYAMLSettings'](arg1);
 }
 
-export function Run() {
-  return window['go']['main']['App']['Run']();
-}
-
 export function SelectProjectDirectory() {
   return window['go']['main']['App']['SelectProjectDirectory']();
 }
 
-export function StartInteractiveBrowser(arg1) {
-  return window['go']['main']['App']['StartInteractiveBrowser'](arg1);
+export function StartInteractiveBrowser() {
+  return window['go']['main']['App']['StartInteractiveBrowser']();
 }
 
 export function StopInteractiveBrowser(arg1) {

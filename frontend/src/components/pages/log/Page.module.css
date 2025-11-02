@@ -1,13 +1,27 @@
 .container {
   color: #808594;
+  overflow: auto;
+  max-height: 100%;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: auto;
 }
 
 table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  overflow-y: scroll;
   table-layout: fixed;
+  overflow-y: scroll;
+}
+
+.container { -ms-overflow-style:none; scrollbar-width:none; }
+.container::-webkit-scrollbar{ display:none; }
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #35353e;     /* ensure it doesn’t go transparent over rows */
 }
 
 th {  
