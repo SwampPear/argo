@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"sync"
+	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/SwampPear/argo/pkg/settings"
@@ -102,24 +103,13 @@ func (m *Manager) AppendLog(le LogEntry) {
 	runtime.EventsEmit(m.ctx, "log:event", le)
 }
 
-// 
+// Gets logs for the analyzer.
 func (m *Manager) Logs() []LogEntry {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	// return a copy so callers can't mutate internal state
-	out := make([]LogEntry, len(m.state.Logs))
-	copy(out, m.state.Logs)
-
-	return out
-}
-
-func (m *Manager) Logs() []LogEntry {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	out := make([]LogEntry, 0, len(m.logs))
-	for _, e := range m.logs {
+	out := make([]LogEntry, 0, len(m.state.Logs))
+	for _, e := range m.state.Logs {
 		if strings.EqualFold(strings.TrimSpace(e.Module), "Analyzer") {
 			continue
 		}

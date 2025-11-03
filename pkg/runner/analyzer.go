@@ -1,14 +1,12 @@
 package runner
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
+	"os"
 
 	"github.com/SwampPear/argo/pkg/state"
 )
@@ -53,9 +51,7 @@ func (a *Analyzer) Start(m *state.Manager) error {
 		Summary:    "Analyzer started.",
 	})
 
-	if a.LLM == nil {
-		return errors.New("Analyzer: LLM client is nil; set Analyzer.LLM")
-	}
+	a.ensureLLM()
 
 	// defaults
 	if a.MaxTokensPerBatch <= 0 {
@@ -103,15 +99,14 @@ func (a *Analyzer) Start(m *state.Manager) error {
 		if ti != tj {
 			return ti < tj
 		}
+
+		return false
 	})
 
 	// batch
 	batches := a.makeBatches(logs)
 
 	ctx := context.Background()
-	var totalScore float64
-	var totalWeight float64
-
 	for bi, batch := range batches {
 		bStart := time.Now()
 
@@ -161,7 +156,7 @@ func (a *Analyzer) Start(m *state.Manager) error {
 }
 
 // Computer max lines per batch.
-func (a *Analyzer) maxLines() uint {
+func (a *Analyzer) maxLines() int {
 	maxLines := a.MaxTokensPerBatch / a.ApproxTokensPerLog
 	if maxLines <= 0 {
 		maxLines = 1
@@ -169,6 +164,8 @@ func (a *Analyzer) maxLines() uint {
 	if maxLines > a.MaxLogsPerBatch {
 		maxLines = a.MaxLogsPerBatch
 	}
+
+	return maxLines
 }
 
 // Make batches
@@ -197,6 +194,26 @@ func (a *Analyzer) makeBatches(logs []state.LogEntry) [][]state.LogEntry {
 	return batches
 }
 
+// Ensures LLM is configured on analyzation start.
+func (a *Analyzer) ensureLLM() error {
+	if a.LLM != nil {
+		return nil
+	}
+
+	// Try Ollama
+	ollamaURL := os.Getenv("OLLAMA_HOST")
+	ollamaModel := os.Getenv("OLLAMA_MODEL")
+
+	a.LLM = &OllamaClient{
+		BaseURL:     ollamaURL,
+		Model:       ollamaModel,
+		Temperature: 0.0,
+		Timeout:     60 * time.Second,
+	}
+
+	return nil
+}
+
 // Calls an LLM.
 func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score float64, explanation string, indicators []string, raw string) {
 	// format prompt
@@ -218,16 +235,20 @@ func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score fl
 	*/
 
 	// query LLM
+	/*
 	resp, err := a.LLM.Complete(ctx, system, b.String())
 	raw = strings.TrimSpace(resp)
+	*/
 
 	// format report
+	/*
 	if err == nil && raw != "" {
 		var rep BugReport
 		if json.Unmarshal([]byte(raw), &rep) == nil && rep.Explanation != "" {
 			return clamp(rep.Score, 0, 1), strings.TrimSpace(rep.Explanation), cleanIndicators(rep.Indicators), raw
 		}
 	}
+	*/
 
 	return 0.25, "LLM analysis failed; defaulting to low risk", []string{"llm-call-error"}, raw
 }
