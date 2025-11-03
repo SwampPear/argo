@@ -1,5 +1,12 @@
 {
   "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "@wails/*": ["../wailsjs/*"],
+      "@go/*": ["../wailsjs/go/*"],
+      "@state/*": ["state/*"],
+      "@components/*": ["components/*"],
+    },
     "target": "ESNext",
     "useDefineForClassFields": true,
     "lib": [

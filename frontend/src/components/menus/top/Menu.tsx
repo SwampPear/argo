@@ -1,10 +1,12 @@
-import { StartInteractiveBrowser } from '../../../../wailsjs/go/app/App'
-import { LogError } from '../../../../wailsjs/runtime'
+//import { StartInteractiveBrowser } from '../../../../wailsjs/go/app/App'
+import { StartInteractiveBrowser } from '@go/app/App'
+import { LogError, LogInfo } from '../../../../wailsjs/runtime'
 import { useAppStore } from '../../../state/state'
 import styles from './Menu.module.css'
 
 const Menu = () => {
   const projectDir = useAppStore(s => s.state.projectDir)
+
   const setPage = useAppStore(s => s.setPage)
   const selectProjectDirectory = useAppStore(s => s.selectProjectDirectory)
   const loadYAMLSettings = useAppStore(s => s.loadYAMLSettings)
@@ -12,9 +14,12 @@ const Menu = () => {
   const handleSetProject = async () => {
     try {
       const dir = await selectProjectDirectory()
-      if (dir) await loadYAMLSettings(`${dir}/scope.yaml`)
-    } catch (e) {
-      LogError(`Project setup error: ${String(e)}`)
+      const settingsPath = `${dir}/scope.yaml`
+
+      if (dir) await loadYAMLSettings(settingsPath)
+      LogInfo(`Settings updated from ${settingsPath}.`)
+    } catch (e: any) {
+      LogError(`Project setup error: ${String(e?.message || e)}`)
     }
   }
 
@@ -22,7 +27,7 @@ const Menu = () => {
     try {
       await StartInteractiveBrowser()
     } catch (e: any) {
-      LogError(`StartInteractiveBrowser error: ${String(e?.message || e)}`)
+      LogError(`Browser starting error: ${String(e?.message || e)}`)
     }
   }
 
