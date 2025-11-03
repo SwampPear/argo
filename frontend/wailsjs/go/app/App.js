@@ -22,6 +22,10 @@ export function SetState(arg1, arg2) {
   return window['go']['app']['App']['SetState'](arg1, arg2);
 }
 
+export function StartAnalyzer() {
+  return window['go']['app']['App']['StartAnalyzer']();
+}
+
 export function StartInteractiveBrowser() {
   return window['go']['app']['App']['StartInteractiveBrowser']();
 }

@@ -11,16 +11,18 @@ import (
 
 // App.
 type App struct {
-	ctx       context.Context
-	stateMgr  *state.Manager
+	ctx        context.Context
+	stateMgr   *state.Manager
 	playwright *runner.Playwright
+	analyzer   *runner.Analyzer
 }
 
 // Creates a new App instance with initialized subsystems.
 func New() *App {
 	return &App{
-		stateMgr:  nil,
+		stateMgr:   nil,
 		playwright: &runner.Playwright{},
+		analyzer:	  &runner.Analyzer{},
 	}
 }
 
@@ -80,3 +82,7 @@ func (a *App) StartInteractiveBrowser() error {
 	return a.playwright.Start(a.stateMgr)
 }
 
+// Starts the analyzer.
+func (a *App) StartAnalyzer() error {
+	return a.analyzer.Start(a.stateMgr)
+}

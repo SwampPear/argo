@@ -13,4 +13,6 @@ export function SelectProjectDirectory():Promise<string>;
 
 export function SetState(arg1:state.AppState,arg2:number):Promise<state.AppState>;
 
+export function StartAnalyzer():Promise<void>;
+
 export function StartInteractiveBrowser():Promise<void>;
