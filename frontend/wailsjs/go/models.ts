@@ -172,6 +172,10 @@ export namespace settings {
 	    Provider: string;
 	    AllowInternetAccess: boolean;
 	    MaxContextTokens: number;
+	    BaseURL: string;
+	    Model: string;
+	    Timeout: number;
+	    Temperature: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new LLMSettings(source);
@@ -182,6 +186,10 @@ export namespace settings {
 	        this.Provider = source["Provider"];
 	        this.AllowInternetAccess = source["AllowInternetAccess"];
 	        this.MaxContextTokens = source["MaxContextTokens"];
+	        this.BaseURL = source["BaseURL"];
+	        this.Model = source["Model"];
+	        this.Timeout = source["Timeout"];
+	        this.Temperature = source["Temperature"];
 	    }
 	}
 	export class PerHost {

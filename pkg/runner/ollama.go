@@ -10,9 +10,8 @@ import (
 )
 
 type OllamaClient struct {
-	BaseURL string // e.g. "http://localhost:11434"
-	Model   string // e.g. "llama3.1:8b-instruct"
-	// Optional knobs:
+	BaseURL 		string
+	Model   		string
 	Timeout     time.Duration
 	Temperature float64
 }
@@ -50,6 +49,7 @@ func (c *OllamaClient) Complete(ctx context.Context, system, prompt string) (str
 	if out.Error != "" {
 		return "", fmt.Errorf(out.Error)
 	}
+	
 	return out.Message.Content, nil
 }
 

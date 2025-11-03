@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"time"
 	"strings"
 	"gopkg.in/yaml.v3"
 )
@@ -67,9 +68,13 @@ func (c *CaptchaPolicy) UnmarshalYAML(node *yaml.Node) error {
 }
 
 type LLMSettings struct {
-	Provider            string `yaml:"provider"`
-	AllowInternetAccess bool   `yaml:"allow_internet_access"`
-	MaxContextTokens    int    `yaml:"max_context_tokens"`
+	Provider            string 				`yaml:"provider"`
+	AllowInternetAccess bool   				`yaml:"allow_internet_access"`
+	MaxContextTokens    int    				`yaml:"max_context_tokens"`
+	BaseURL							string 				`yaml:"base_url"`
+	Model								string 				`yaml:"model"`
+	Timeout							time.Duration `yaml:"timeout"`
+	Temperature					float64				`yaml:"temperature"`
 }
 
 type ScopeProgramSettings struct {
@@ -141,8 +146,8 @@ type AuthenticationAccount struct {
 }
 
 type AuthenticationSettings struct {
-	Allowed              bool                   `yaml:"allowed"`
-	TestAccountsProvided bool                   `yaml:"test_accounts_provided"`
+	Allowed              bool                    `yaml:"allowed"`
+	TestAccountsProvided bool                    `yaml:"test_accounts_provided"`
 	Accounts             []AuthenticationAccount `yaml:"accounts"`
 }
 
@@ -163,6 +168,10 @@ func Default() Settings {
 			Provider:            "local",
 			AllowInternetAccess: false,
 			MaxContextTokens:    32000,
+			BaseURL:						 "",
+			Model:							 "",
+			Timeout:						 0.0,
+			Temperature:				 0.0,
 		},
 		Program: ScopeProgramSettings{},
 		Rules: ScopeRulesSettings{
