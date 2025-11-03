@@ -3,7 +3,7 @@ import { EventsOn } from '../wailsjs/runtime'
 import './App.css'
 import TopMenu from './components/menus/top/Menu'
 import Page from './components/pages/Page'
-import { useAppStore, type LogEntry } from './state/useAppStore'
+import { useAppStore, type LogEntry } from './state/state'
 
 
 const App = () => {

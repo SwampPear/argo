@@ -1,6 +1,6 @@
 import { StartInteractiveBrowser } from '../../../../wailsjs/go/app/App'
 import { LogError } from '../../../../wailsjs/runtime'
-import { useAppStore } from '../../../state/useAppStore'
+import { useAppStore } from '../../../state/state'
 import styles from './Menu.module.css'
 
 const Menu = () => {

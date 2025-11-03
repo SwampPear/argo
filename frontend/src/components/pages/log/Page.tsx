@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { useAppStore } from '../../../state/useAppStore'
+import { useAppStore } from '../../../state/state'
 import styles from './Page.module.css'
 
 interface ICellProps {

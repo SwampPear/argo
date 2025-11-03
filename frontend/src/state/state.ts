@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import * as backend from '../../wailsjs/go/app/App'
 import { settings } from '../../wailsjs/go/models'
-import { EventsOn, LogError } from '../../wailsjs/runtime'
+import { EventsOn, LogError } from '../../wailsjs/runtime/runtime'
 
 export type LogEntry = {
   step?: number

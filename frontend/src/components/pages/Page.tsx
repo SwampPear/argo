@@ -1,4 +1,4 @@
-import { useAppStore } from '../../state/useAppStore'
+import { useAppStore } from '../../state/state'
 import styles from './Page.module.css'
 import BugsPage from './bugs/Page'
 import LogPage from './log/Page'
