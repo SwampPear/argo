@@ -76,7 +76,7 @@ const run = async () => {
   process.on('SIGINT', graceful); process.on('SIGTERM', graceful)
 
   if (keepOpen) {
-    log({ action:'ready', target:'-', status:'OK', duration:'0s', confidence:1, summary:'Headful session started' })
+    log({ action:'ready', target:'-', status:'OK', duration:'0s', confidence:1, summary:'Playwright session started.' })
     await new Promise(resolve => browser.on('disconnected', resolve))
     await graceful()
   } else {

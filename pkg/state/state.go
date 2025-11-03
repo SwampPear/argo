@@ -74,6 +74,17 @@ func (m *Manager) SetState(next AppState, baseVersion int64) AppState {
 	return s
 }
 
+// Hydrates the frontend with current state.
+func (m *Manager) Broadcast() {
+	m.mu.RLock()
+	s := m.state
+	v := m.version
+	m.mu.RUnlock()
+
+	s.Version = v
+	runtime.EventsEmit(m.ctx, "state:update", s)
+}
+
 // AppendLog adds a log entry and emits an update event.
 func (m *Manager) AppendLog(le LogEntry) {
 	m.mu.Lock()
@@ -91,12 +102,29 @@ func (m *Manager) AppendLog(le LogEntry) {
 	runtime.EventsEmit(m.ctx, "log:event", le)
 }
 
-func (m *Manager) Broadcast() {
+// 
+func (m *Manager) Logs() []LogEntry {
 	m.mu.RLock()
-	s := m.state
-	v := m.version
-	m.mu.RUnlock()
+	defer m.mu.RUnlock()
 
-	s.Version = v
-	runtime.EventsEmit(m.ctx, "state:update", s)
+	// return a copy so callers can't mutate internal state
+	out := make([]LogEntry, len(m.state.Logs))
+	copy(out, m.state.Logs)
+
+	return out
+}
+
+func (m *Manager) Logs() []LogEntry {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]LogEntry, 0, len(m.logs))
+	for _, e := range m.logs {
+		if strings.EqualFold(strings.TrimSpace(e.Module), "Analyzer") {
+			continue
+		}
+		
+		out = append(out, e)
+	}
+	return out
 }
