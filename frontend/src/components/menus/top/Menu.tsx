@@ -52,8 +52,6 @@ const Menu = () => {
 
       <div className={styles.flexGrow} />
 
-      
-
       <div className={styles.pageSelectionContainer}>
         <button className={styles.pageSelectionButton} onClick={() => setPage('bugs')} title="Bugs">
           <svg xmlns="http://www.w3.org/2000/svg" className={styles.pageSelectionButtonIcon} viewBox="0 0 16 16">

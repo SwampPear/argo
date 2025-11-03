@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"io"
-
+	"strings"
 	"gopkg.in/yaml.v3"
 )
 
+// Supported HTTP methods.
 type HTTPMethod int
 const (
 	HTTPGet HTTPMethod = iota
@@ -29,76 +29,42 @@ var httpMethodFromStr = map[string]HTTPMethod{
 	"patch":   HTTPPatch,
 	"delete":  HTTPDelete,
 }
-var httpMethodToStr = []string{"GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"}
 
-func (m HTTPMethod) String() string {
-	if int(m) >= 0 && int(m) < len(httpMethodToStr) {
-		return httpMethodToStr[m]
-	}
-	return "UNKNOWN"
-}
-
-func (m *HTTPMethod) UnmarshalYAML(node *yaml.Node) error {
-	// accept either string (case-insensitive) or integer
-	if node.Kind != yaml.ScalarNode {
-		return fmt.Errorf("HTTPMethod must be a scalar")
-	}
-	var asStr string
-	if err := node.Decode(&asStr); err == nil {
-		if v, ok := httpMethodFromStr[lower(asStr)]; ok {
-			*m = v
-			return nil
-		}
-		return fmt.Errorf("invalid HTTPMethod %q", asStr)
-	}
-	var asInt int
-	if err := node.Decode(&asInt); err == nil {
-		*m = HTTPMethod(asInt)
-		return nil
-	}
-	return fmt.Errorf("invalid HTTPMethod value")
-}
-
+// Supported CAPTCHA policies.
 type CaptchaPolicy int
-
 const (
 	CaptchaManual CaptchaPolicy = iota
 )
 
-func (c *CaptchaPolicy) UnmarshalYAML(node *yaml.Node) error {
-	if node.Kind != yaml.ScalarNode {
-		return fmt.Errorf("CaptchaPolicy must be a scalar")
-	}
+var captchaPolicyFromStr = map[string]CaptchaPolicy{
+	"manual": CaptchaManual,
+}
+
+func (m *HTTPMethod) UnmarshalYAML(node *yaml.Node) error {
 	var s string
 	if err := node.Decode(&s); err == nil {
-		switch lower(s) {
-		case "manual", "captcha_manual", "0":
-			*c = CaptchaManual
+		if v, ok := httpMethodFromStr[strings.ToLower(s)]; ok {
+			*m = v
 			return nil
-		default:
-			return fmt.Errorf("invalid CaptchaPolicy %q", s)
+		}
+
+		return fmt.Errorf("invalid HTTPMethod %q", s)
+	}
+	
+	return fmt.Errorf("invalid HTTPMethod value")
+}
+
+func (c *CaptchaPolicy) UnmarshalYAML(node *yaml.Node) error {
+	var s string
+	if err := node.Decode(&s); err == nil {
+		if v, ok := captchaPolicyFromStr[strings.ToLower(s)]; ok {
+			*c = v
+			return nil
 		}
 	}
-	var i int
-	if err := node.Decode(&i); err == nil {
-		*c = CaptchaPolicy(i)
-		return nil
-	}
+
 	return fmt.Errorf("invalid CaptchaPolicy value")
 }
-
-func lower(s string) string {
-	// tiny helper to avoid importing strings for one call
-	b := []byte(s)
-	for i := range b {
-		if 'A' <= b[i] && b[i] <= 'Z' {
-			b[i] = b[i] + 32
-		}
-	}
-	return string(b)
-}
-
-// ====== Structs with YAML tags ======
 
 type LLMSettings struct {
 	Provider            string `yaml:"provider"`
@@ -114,11 +80,11 @@ type ScopeProgramSettings struct {
 
 type ScopeRulesSettings struct {
 	AllowedHTTPMethods       []HTTPMethod  `yaml:"allowed_http_methods"`
-	DestructiveActionsForbid bool         `yaml:"destructive_actions_forbidden"`
-	AuthBruteforceForbid     bool         `yaml:"auth_bruteforce_forbidden"`
-	DoSForbid                bool         `yaml:"dos_forbidden"`
+	DestructiveActionsForbid bool          `yaml:"destructive_actions_forbidden"`
+	AuthBruteforceForbid     bool          `yaml:"auth_bruteforce_forbidden"`
+	DoSForbid                bool          `yaml:"dos_forbidden"`
 	CaptchaPolicy            CaptchaPolicy `yaml:"captcha_policy"`
-	MaxRequestBodyKB         int          `yaml:"max_request_body_kb"`
+	MaxRequestBodyKB         int           `yaml:"max_request_body_kb"`
 }
 
 type ComplianceLoggingSettings struct {
@@ -155,7 +121,7 @@ type RateLimitSettings struct {
 }
 
 type Asset struct {
-	Mode        string   `yaml:"mode"` // e.g., "web", "api", "mobile-api"
+	Mode        string   `yaml:"mode"`
 	Hostname    string   `yaml:"hostname"`
 	Paths       []string `yaml:"paths"`
 	Ports       []uint   `yaml:"ports"`
@@ -190,7 +156,7 @@ type Settings struct {
 	Authentication AuthenticationSettings `yaml:"authentication"`
 }
 
-// Default as you provided (unchanged)
+// Default settings.
 func Default() Settings {
 	return Settings{
 		LLM: LLMSettings{
@@ -240,26 +206,11 @@ func LoadYAML(path string) (Settings, error) {
 	}
 
 	dec := yaml.NewDecoder(bytes.NewReader(data))
+
 	dec.KnownFields(true) // strict: error on unknown keys
 	if err := dec.Decode(&cfg); err != nil {
 		return cfg, fmt.Errorf("parse %s: %w", path, err)
 	}
+
 	return cfg, nil
-}
-
-// ---- tiny helper to use yaml.Decoder with []byte without importing bytes in user code
-
-type byteReader struct{ b []byte; i int }
-
-func bytesReader(b []byte) *yaml.Decoder {
-	// emulate io.Reader for yaml.Decoder
-	return yaml.NewDecoder(&byteReader{b: b})
-}
-func (r *byteReader) Read(p []byte) (int, error) {
-	if r.i >= len(r.b) {
-		return 0, io.EOF
-	}
-	n := copy(p, r.b[r.i:])
-	r.i += n
-	return n, nil
 }
