@@ -1,6 +1,7 @@
 import { useAppStore } from '../../state/useAppStore'
-import LogPage from './log/Page'
 import styles from './Page.module.css'
+import BugsPage from './bugs/Page'
+import LogPage from './log/Page'
 import SettingsPage from './settings/Page'
 
 
@@ -11,10 +12,12 @@ const Page = () => {
     switch (page) {
       case 'settings':
         return <SettingsPage/>
-      case 'log':
+      case 'logs':
         return <LogPage/>
+      case 'bugs':
+        return <BugsPage/>
       default:
-        return <LogPage/>
+        return <SettingsPage/>
     }
   }
 

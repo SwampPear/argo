@@ -17,7 +17,7 @@ export type LogEntry = {
   parent_step_id?: string
 }
 
-export type AppPage = 'settings' | 'log'
+export type AppPage = 'settings' | 'logs' | 'bugs'
 
 export type RemoteState = {
   projectDir: string
