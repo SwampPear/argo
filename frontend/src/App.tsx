@@ -1,9 +1,9 @@
+import Menu from '@components/menu/Menu'
+import Page from '@components/pages/Page'
+import { useAppStore, type LogEntry } from '@state/state'
+import { EventsOn } from '@wails/runtime'
 import { useEffect } from 'react'
-import { EventsOn } from '../wailsjs/runtime'
 import './App.css'
-import TopMenu from './components/menus/top/Menu'
-import Page from './components/pages/Page'
-import { useAppStore, type LogEntry } from './state/state'
 
 
 const App = () => {
@@ -33,7 +33,7 @@ const App = () => {
 
   return (
     <div id="app">
-      <TopMenu/>
+      <Menu/>
       <div id="container">
         <Page/>
       </div>
