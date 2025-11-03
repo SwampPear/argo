@@ -7,33 +7,33 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+
+	"github.com/SwampPear/argo/internal/app"
 )
 
-
-var assets embed.FS // go:embed all:frontend/dist
+//go:embed all:frontend/dist
+var assets embed.FS
 
 func main() {
-	app := NewApp()
+	a := app.New() // use internal/app.New()
 
 	err := wails.Run(&options.App{
-		Title:  "Argo",
-		DisableResize: false,
-		WindowStartState: options.Normal, // or options.Maximised on macOS
-    Mac: &mac.Options{
-      TitleBar: mac.TitleBarDefault(), // or mac.TitleBarHiddenInset() – still shows traffic lights
-    },
-		Width:  1024,
-		Height: 768,
-		MinWidth:    400,
-    MinHeight:   300,
-    MaxWidth:    0,
-    MaxHeight:   0,
+		Title:            "Argo",
+		DisableResize:    false,
+		WindowStartState: options.Normal,
+		Mac: &mac.Options{
+			TitleBar: mac.TitleBarDefault(),
+		},
+		Width:     1024,
+		Height:    768,
+		MinWidth:  400,
+		MinHeight: 300,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		OnStartup:        app.startup,
+		OnStartup: a.Startup, // note: exported Startup method
 		Bind: []interface{}{
-			app,
+			a,
 		},
 	})
 

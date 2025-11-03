@@ -1,4 +1,4 @@
-import { StartInteractiveBrowser } from '../../../../wailsjs/go/main/App'
+import { StartInteractiveBrowser } from '../../../../wailsjs/go/app/App'
 import { LogError } from '../../../../wailsjs/runtime'
 import { useAppStore } from '../../../state/useAppStore'
 import styles from './Menu.module.css'

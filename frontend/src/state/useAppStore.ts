@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import * as backend from '../../wailsjs/go/main/App'
+import * as backend from '../../wailsjs/go/app/App'
 import { settings } from '../../wailsjs/go/models'
 import { EventsOn, LogError } from '../../wailsjs/runtime'
 
