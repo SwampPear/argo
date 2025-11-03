@@ -217,7 +217,6 @@ func (a *Analyzer) ensureLLM() error {
 // Calls an LLM.
 func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score float64, explanation string, indicators []string, raw string) {
 	// format prompt
-	/*
 	system := "You are a senior reliability engineer. Analyze execution logs for hidden bugs and return STRICT JSON."
 
 	var b bytes.Buffer
@@ -229,26 +228,21 @@ func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score fl
 	fmt.Fprintln(&b, "Logs:")
 	for _, e := range logs {
 		fmt.Fprintf(&b, "- ts=%s mod=%s act=%s tgt=%s st=%s dur=%s conf=%.2f :: %s\n",
-			trimTS(e.Timestamp), safe(e.Module), safe(e.Action), safe(e.Target),
+			trimTimestamp(e.Timestamp), safe(e.Module), safe(e.Action), safe(e.Target),
 			safe(e.Status), safe(e.Duration), e.Confidence, truncate(e.Summary, 140))
 	}
-	*/
 
 	// query LLM
-	/*
 	resp, err := a.LLM.Complete(ctx, system, b.String())
 	raw = strings.TrimSpace(resp)
-	*/
 
 	// format report
-	/*
 	if err == nil && raw != "" {
 		var rep BugReport
 		if json.Unmarshal([]byte(raw), &rep) == nil && rep.Explanation != "" {
 			return clamp(rep.Score, 0, 1), strings.TrimSpace(rep.Explanation), cleanIndicators(rep.Indicators), raw
 		}
 	}
-	*/
 
 	return 0.25, "LLM analysis failed; defaulting to low risk", []string{"llm-call-error"}, raw
 }
