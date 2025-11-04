@@ -1,5 +1,5 @@
 import { useAppStore } from '@state/state'
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import styles from './Page.module.css'
 
 interface ICellProps {
@@ -58,6 +58,15 @@ const Page = () => {
       }
     })
   }, [logs, scopeFilter])
+
+  useEffect(() => {
+    const el = tbodyRef.current
+    if (!el) return
+    // scroll to the last row smoothly if container is scrollable
+    const last = el.lastElementChild as HTMLElement | null
+    if (last) last.scrollIntoView({ block: 'end' })
+  }, [rows.length])
+
 
   return (
     <div className={styles.container}>

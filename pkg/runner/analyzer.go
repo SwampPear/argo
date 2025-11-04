@@ -121,6 +121,8 @@ func (a *Analyzer) Start(m *state.Manager) error {
 		// emit report log
 		log(m, "batchComplete", status, summary, fmt.Sprintf("%d-logs", len(batch)), time.Since(bStart).String(), 
 				clamp(score, 0, 1))
+
+		fmt.Println(summary)
 	}
 
 	log(m, "complete", "OK", "Analyzation complete.", fmt.Sprintf("%d-logs", len(logs)), 
