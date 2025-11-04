@@ -1,5 +1,5 @@
+import { useAppStore } from '@state/state'
 import { useMemo } from 'react'
-import { useAppStore } from '../../../state/state'
 import styles from './Page.module.css'
 
 const Content = () => {

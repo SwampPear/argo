@@ -57,7 +57,7 @@ func log(m *state.Manager, action string, status string, summary string, target 
 // Starts the analyzer (single pass, no streaming).
 func (a *Analyzer) Start(m *state.Manager) error {
 	// start message
-	log(m, "analyzer-start", "OK", "Analyzer started.", "", "", 0)
+	log(m, "start", "OK", "Analyzer started.", "", "", 0)
 	
 	// ensure llm exists in context
 	a.ensureLLM(m)
@@ -84,7 +84,7 @@ func (a *Analyzer) Start(m *state.Manager) error {
 
 	// no logs
 	if len(logs) == 0 {
-		log(m, "analyzer-analyze", "OK", "No logs to analyze.", "", "", 0)
+		log(m, "noLogs", "OK", "No logs to analyze.", "", "", 0)
 		return nil
 	}
 
@@ -119,11 +119,11 @@ func (a *Analyzer) Start(m *state.Manager) error {
 		)
 
 		// emit report log
-		log(m, "analyzer-batchComplete", status, summary, fmt.Sprintf("%d-logs", len(batch)), time.Since(bStart).String(), 
+		log(m, "batchComplete", status, summary, fmt.Sprintf("%d-logs", len(batch)), time.Since(bStart).String(), 
 				clamp(score, 0, 1))
 	}
 
-	log(m, "analyzer-complete", "OK", "Analyzation complete.", fmt.Sprintf("%d-logs", len(logs)), 
+	log(m, "complete", "OK", "Analyzation complete.", fmt.Sprintf("%d-logs", len(logs)), 
 			time.Since(startAll).String(), 0)
 
 	return nil
