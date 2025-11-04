@@ -376,6 +376,7 @@ export namespace state {
 	    settings: settings.Settings;
 	    logs: LogEntry[];
 	    version: number;
+	    scopeFilter: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new AppState(source);
@@ -387,6 +388,7 @@ export namespace state {
 	        this.settings = this.convertValues(source["settings"], settings.Settings);
 	        this.logs = this.convertValues(source["logs"], LogEntry);
 	        this.version = source["version"];
+	        this.scopeFilter = source["scopeFilter"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

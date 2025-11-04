@@ -99,6 +99,23 @@
   width: 1.75rem;
 }
 
+.icon,
+.iconSet,
+.iconUnset {
+  border-radius: .25rem;
+  fill: #808594;
+  height: 1.15rem;
+  width: 1.125rem;
+}
+
+.iconSet {
+  fill: #808594;
+}
+
+.iconUnset {
+  fill: #34353e;
+}
+
 .playIcon {
   fill: #417b3b;
   height: 1.75rem;

@@ -5,12 +5,12 @@ llm:
   base_url: "http://localhost:11434"
   model: "llama3.2"
   timeout: 60
-  temperature: 0.4
+  temperature: 0.3
 
 program:
-  client: "acme"
-  contact: "security@acme.shop"
-  notes: "Follow the program's Safe-Harbor rules. No testing of 3rd-party services unless explicitly listed."
+  client: "ripio"
+  contact: ""
+  notes: "Multiple vulnerabilities caused by one underlying issue will be awarded one bounty. Social engineering (e.g. phishing, vishing, smishing) is prohibited. Make a good faith effort to avoid privacy violations, destruction of data, and interruption or degradation of our service. Only interact with accounts you own or with the explicit permission of the account holder. Any vulnerability reports on Ripio integration with third parties will not be applicable for reward."
 
 rules:
   allowed_http_methods: [GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE]
@@ -27,50 +27,33 @@ compliance:
     include_request_bodies: true
     include_response_bodies: true
   notifications:
-    on_violation: ["slack://sec-team", "email://security@acme.shop"]
-    on_completion: ["email://security@acme.shop"]
+    on_violation: []
+    on_completion: []
 
 rate_limits:
   global:
-    requests_per_minute: 60
-    concurrent_requests: 5
   per_host:
-    - host: "app.acme.shop"
-      requests_per_minute: 20
-      concurrent_requests: 2
-    - host: "api.acme.shop"
-      requests_per_minute: 30
-      concurrent_requests: 3
 
 assets:
   in_scope:
     - mode: web
-      hostname: app.acme.shop
-      paths: ["/", "/account/**", "/orders/**"]
-    - mode: api
-      hostname: api.acme.shop
-      schemes: ["https"]
-      ports: [443]
-      paths: ["/v1/**"]
-    - mode: mobile-api
-      hostname: m.acme.shop
-      paths: ["/v2/**"]
+      hostname: trade.ripio.com
+      paths: ["/"]
+    - mode: web
+      hostname: https://kyc.ripio.com/
+      paths: ["/"]
+    - mode: web
+      hostname: http://auth.ripio.com
+      paths: ["/"]
+    - mode: web
+      hostname: defi.ripio.com
+      paths: ["/"]
+    - mode: web
+      hostname: app.ripio.com
+      paths: ["/"]
   out_of_scope:
-    - mode: third_party
-      description: "Payment processor pages hosted on pay.example.com"
-    - mode: marketing
-      hostname: www.acme.shop
-      paths: ["/blog/**", "/careers/**"]
-    - mode: support
-      hostname: help.acme.shop
 
 authentication:
   allowed: true
-  test_accounts_provided: true
+  test_accounts_provided: false
   accounts:
-    - username: tester1@acme.shop
-      role: customer
-      password: "VAULT:acme/tester1"
-    - username: tester2@acme.shop
-      role: customer
-      password: "VAULT:acme/tester2"

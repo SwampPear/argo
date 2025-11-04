@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 	"strings"
+	"fmt"
 	"sort"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/SwampPear/argo/pkg/settings"
@@ -24,10 +25,11 @@ type LogEntry struct {
 }
 
 type AppState struct {
-	ProjectDir string            `json:"projectDir"`
-	Settings   settings.Settings `json:"settings"`
-	Logs       []LogEntry        `json:"logs"`
-	Version    int64             `json:"version"`
+	ProjectDir  string            `json:"projectDir"`
+	Settings    settings.Settings `json:"settings"`
+	Logs        []LogEntry        `json:"logs"`
+	Version     int64             `json:"version"`
+	ScopeFilter bool							`json:"scopeFilter"`
 }
 
 type Manager struct {
@@ -42,8 +44,9 @@ func New(ctx context.Context) *Manager {
 	return &Manager{
 		ctx: ctx,
 		state: AppState{
-			Settings: settings.Default(),
-			Logs:     make([]LogEntry, 0, 256),
+			Settings: 	 settings.Default(),
+			Logs:     	 make([]LogEntry, 0, 256),
+			ScopeFilter: false,
 		},
 	}
 }
@@ -87,6 +90,22 @@ func (m *Manager) Broadcast() {
 }
 
 // AppendLog adds a log entry and emits an update event.
+func (m *Manager) AppendLog(le LogEntry) {
+	m.mu.Lock()
+	if le.Step == 0 {
+		m.step++
+		le.Step = m.step
+	}
+	m.state.Logs = append(m.state.Logs, le)
+	m.version++
+	s := m.state
+	s.Version = m.version
+	m.mu.Unlock()
+
+	runtime.EventsEmit(m.ctx, "state:update", s)
+	runtime.EventsEmit(m.ctx, "log:event", le)
+}
+
 func (m *Manager) AppendLog(le LogEntry) {
 	m.mu.Lock()
 	if le.Step == 0 {

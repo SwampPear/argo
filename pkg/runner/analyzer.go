@@ -89,7 +89,7 @@ func (a *Analyzer) Start(m *state.Manager) error {
 	}
 
 	// make batch
-	batches := a.makeBatches(logs)
+	batches := a.makeBatches(m, logs)
 
 	// process batches
 	startAll := time.Now()
@@ -143,12 +143,12 @@ func (a *Analyzer) maxLines() int {
 }
 
 // Make batches
-func (a *Analyzer) makeBatches(logs []state.LogEntry) [][]state.LogEntry {
+func (a *Analyzer) makeBatches(m *state.Manager, logs []state.LogEntry) [][]state.LogEntry {// filter
 	var batches [][]state.LogEntry
 
 	maxLines := a.maxLines()
 	
-	// slice by count
+	// slice
 	cur := make([]state.LogEntry, 0, maxLines)
 	var curCount int
 	for _, e := range logs {
@@ -164,6 +164,11 @@ func (a *Analyzer) makeBatches(logs []state.LogEntry) [][]state.LogEntry {
 	if len(cur) > 0 {
 		batches = append(batches, cur)
 	}
+
+	// filter
+	scopeFilter := m.GetState().Settings.LLM.BaseURL
+	fmt.Println(scopeFilter)
+	fmt.Println("sadf")
 
 	return batches
 }
@@ -282,6 +287,8 @@ func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score fl
 	if err != nil {
 		return 0.25, "LLM analysis failed", []string{"llm-call-error"}, err.Error()
 	}
+
+	fmt.Println(raw)
 
 	// format report
 	if raw != "" {

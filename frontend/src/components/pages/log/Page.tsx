@@ -18,13 +18,29 @@ const MAX_ROWS = 1000
 const Page = () => {
   const tbodyRef = useRef<HTMLTableSectionElement | null>(null)
 
-  // Logs now live under the remote state mirror
   const logs = useAppStore(s => s.state.logs)
+  const scopeFilter = useAppStore(s => s.state.scopeFilter)
+  const settings = useAppStore(s => s.state.settings)
 
   // Prepare a trimmed, render-ready projection
   const rows = useMemo(() => {
-    const slice = logs.length > MAX_ROWS ? logs.slice(-MAX_ROWS) : logs
-    return slice.map((l, i) => {
+    let filtered = logs.length > MAX_ROWS ? logs.slice(-MAX_ROWS) : logs
+    if (scopeFilter) {
+      filtered = filtered.filter((log) => {
+        for (let i = 0; i < settings.Assets.InScope.length; i++) {
+          let hostname = settings.Assets.InScope[i].Hostname
+          hostname += hostname.endsWith('/') ? '' : '/'
+  
+          if (log.target?.includes(hostname)) {
+            return true
+          }
+        }
+  
+        return false
+      })
+    }
+    
+    return filtered.map((l, i) => {
       const parent = (l as any)?.parent_step_id ?? '-'
       return {
         _key: String(l.step ?? l.id ?? i), // prefer step, then id, then index
@@ -40,7 +56,7 @@ const Page = () => {
         parent_step_id: parent
       }
     })
-  }, [logs])
+  }, [logs, scopeFilter])
 
   // Auto-scroll to latest on update
   useEffect(() => {

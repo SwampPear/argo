@@ -23,6 +23,7 @@ export type RemoteState = {
   projectDir: string
   settings: settings.Settings
   logs: LogEntry[]
+  scopeFilter: boolean
 }
 
 type Store = {
@@ -37,12 +38,14 @@ type Store = {
   selectProjectDirectory: () => Promise<string>
   loadYAMLSettings: (path: string) => Promise<settings.Settings>
   setPage: (page: AppPage) => void
+  setScopeFilter: (sf: boolean) => Promise<void>
 }
 
 const defaultRemote: RemoteState = {
   projectDir: '',
   settings: {} as settings.Settings,
-  logs: []
+  logs: [],
+  scopeFilter: false
 }
 
 /** Convert Wails wire AppState (class) -> plain RemoteState */
@@ -52,10 +55,12 @@ function toRemoteState(wire: any): RemoteState {
   const s = wire.settings ?? wire.Settings ?? {}
   const dir = wire.projectDir ?? wire.ProjectDir ?? ''
   const logs = wire.logs ?? wire.Logs ?? []
+  const sf = wire.scopeFilter ?? wire.scopeFilter ?? false
   return {
     projectDir: String(dir || ''),
     settings: s as settings.Settings,
-    logs: Array.isArray(logs) ? logs as LogEntry[] : []
+    logs: Array.isArray(logs) ? logs as LogEntry[] : [],
+    scopeFilter: sf as boolean
   }
 }
 
@@ -65,15 +70,16 @@ function fromRemoteState(s: RemoteState): any {
   return {
     projectDir: s.projectDir,
     settings: s.settings,
-    logs: s.logs
+    logs: s.logs,
+    scopeFilter: s.scopeFilter,
   }
 }
 
 export const useAppStore = create<Store>((set, get) => ({
   state: defaultRemote,
   version: 0,
-  page: 'settings',
-
+  page: 'logs',
+  scopeFilter: false,
   setFromServer: (s) => set({ state: s }),
 
   applyOptimistic: async (draft) => {
@@ -115,7 +121,10 @@ export const useAppStore = create<Store>((set, get) => ({
     return cfg as unknown as settings.Settings
   },
 
-  setPage: (page) => set({ page })
+  setPage: (page) => set({ page }),
+
+  setScopeFilter: async (sf) =>
+    get().applyOptimistic(s => ({ ...s, scopeFilter: sf })),
 }))
 
 
