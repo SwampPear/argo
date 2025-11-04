@@ -6,7 +6,8 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"os"
+	"encoding/json"
+	"bytes"
 
 	"github.com/SwampPear/argo/pkg/state"
 )
@@ -51,17 +52,17 @@ func (a *Analyzer) Start(m *state.Manager) error {
 		Summary:    "Analyzer started.",
 	})
 
-	a.ensureLLM()
+	a.ensureLLM(m)
 
 	// defaults
 	if a.MaxTokensPerBatch <= 0 {
 		a.MaxTokensPerBatch = 1800
 	}
 	if a.ApproxTokensPerLog <= 0 {
-		a.ApproxTokensPerLog = 16
+		a.ApproxTokensPerLog = 32
 	}
 	if a.MaxLogsPerBatch <= 0 {
-		a.MaxLogsPerBatch = 120
+		a.MaxLogsPerBatch = 8
 	}
 	if a.WarnThreshold <= 0 {
 		a.WarnThreshold = 0.60
@@ -194,21 +195,28 @@ func (a *Analyzer) makeBatches(logs []state.LogEntry) [][]state.LogEntry {
 	return batches
 }
 
+// Initializes Ollama client.
+func (a *Analyzer) initOllamaClient(m *state.Manager) error {
+	cfg := m.GetState().Settings.LLM
+
+	a.LLM = &OllamaClient{
+		BaseURL:     cfg.BaseURL,
+		Model:       cfg.Model,
+		Temperature: cfg.Temperature,
+		Timeout:     time.Duration(cfg.Timeout),
+	}
+
+	return nil
+}
+
 // Ensures LLM is configured on analyzation start.
-func (a *Analyzer) ensureLLM() error {
+func (a *Analyzer) ensureLLM(m *state.Manager) error {
 	if a.LLM != nil {
 		return nil
 	}
 
-	// Try Ollama
-	ollamaURL := os.Getenv("OLLAMA_HOST")
-	ollamaModel := os.Getenv("OLLAMA_MODEL")
-
-	a.LLM = &OllamaClient{
-		BaseURL:     ollamaURL,
-		Model:       ollamaModel,
-		Temperature: 0.0,
-		Timeout:     60 * time.Second,
+	if err := a.initOllamaClient(m); err != nil {
+		return err
 	}
 
 	return nil
@@ -233,16 +241,24 @@ func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score fl
 	}
 
 	// query LLM
+	fmt.Println(b.String())
+
 	resp, err := a.LLM.Complete(ctx, system, b.String())
 	raw = strings.TrimSpace(resp)
 
+	if err != nil {
+		return 0.25, "LLM analysis failed", []string{"llm-call-error"}, err.Error()
+	}
+
 	// format report
-	if err == nil && raw != "" {
+	if raw != "" {
 		var rep BugReport
 		if json.Unmarshal([]byte(raw), &rep) == nil && rep.Explanation != "" {
 			return clamp(rep.Score, 0, 1), strings.TrimSpace(rep.Explanation), cleanIndicators(rep.Indicators), raw
 		}
 	}
+
+	fmt.Println(raw)
 
 	return 0.25, "LLM analysis failed; defaulting to low risk", []string{"llm-call-error"}, raw
 }

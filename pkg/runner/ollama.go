@@ -5,52 +5,60 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"time"
 )
 
 type OllamaClient struct {
-	BaseURL 		string
-	Model   		string
-	Timeout     time.Duration
-	Temperature float64
+	BaseURL     string  // e.g. "http://localhost:11434"
+	Model       string
+	Timeout     time.Duration // e.g. 120 * time.Second
+	Temperature float64       // e.g. 0.4
 }
 
 func (c *OllamaClient) Complete(ctx context.Context, system, prompt string) (string, error) {
 	type msg struct{ Role, Content string }
-	body := map[string]any{
-		"model": c.Model,
+	payload := map[string]any{
+		"model":   c.Model,
 		"messages": []msg{
 			{Role: "system", Content: system},
 			{Role: "user", Content: prompt},
 		},
-		"stream":      false,
-		"temperature": c.Temperature,
+		"stream": false,
+		"options": map[string]any{ // Ollama expects sampling under options
+			"temperature": c.Temperature,
+		},
 	}
-	b, _ := json.Marshal(body)
 
-	req, _ := http.NewRequestWithContext(ctx, "POST", c.BaseURL+"/api/chat", bytes.NewReader(b))
+	b, err := json.Marshal(payload)
+	if err != nil { return "", err }
+
+	chatURL, err := url.JoinPath(c.BaseURL, "/api/chat")
+	if err != nil { return "", err }
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, chatURL, bytes.NewReader(b))
+	if err != nil { return "", err }
 	req.Header.Set("Content-Type", "application/json")
 
-	httpClient := &http.Client{Timeout: ifZero(c.Timeout, 60*time.Second)}
+	httpClient := &http.Client{}
 	resp, err := httpClient.Do(req)
-	if err != nil {
-		return "", err
-	}
+	if err != nil { return "", err }
 	defer resp.Body.Close()
+
+	// Handle non-200 with helpful message
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("ollama %s: %s", resp.Status, string(body))
+	}
 
 	var out struct {
 		Message struct{ Content string } `json:"message"`
 		Error   string                   `json:"error"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return "", err
-	}
-	if out.Error != "" {
-		return "", fmt.Errorf(out.Error)
-	}
-	
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil { return "", err }
+	if out.Error != "" { return "", fmt.Errorf(out.Error) }
+
 	return out.Message.Content, nil
 }
-
-func ifZero[T comparable](v, d T) T { var z T; if v == z { return d }; return v }
