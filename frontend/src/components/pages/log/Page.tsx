@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useAppStore } from '../../../state/state'
 import styles from './Page.module.css'
 
@@ -27,6 +27,8 @@ const Page = () => {
     let filtered = logs.length > MAX_ROWS ? logs.slice(-MAX_ROWS) : logs
     if (scopeFilter) {
       filtered = filtered.filter((log) => {
+        if (log.module == 'Analyzer') return true;
+        
         for (let i = 0; i < settings.Assets.InScope.length; i++) {
           let hostname = settings.Assets.InScope[i].Hostname
           hostname += hostname.endsWith('/') ? '' : '/'
@@ -58,7 +60,7 @@ const Page = () => {
     })
   }, [logs, scopeFilter])
 
-  // Auto-scroll to latest on update
+  /*
   useEffect(() => {
     const el = tbodyRef.current
     if (!el) return
@@ -66,6 +68,7 @@ const Page = () => {
     const last = el.lastElementChild as HTMLElement | null
     if (last) last.scrollIntoView({ block: 'end' })
   }, [rows.length])
+    */
 
   return (
     <div className={styles.container}>

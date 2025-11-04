@@ -3,7 +3,6 @@ package state
 import (
 	"context"
 	"sync"
-	"fmt"
 	"strings"
 	"sort"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
