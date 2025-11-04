@@ -250,24 +250,33 @@ func cleanIndicators(in []string) []string {
 
 // Calls an LLM.
 func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score float64, explanation string, indicators []string, raw string) {
-	// format prompt
-	system := "You are a senior reliability engineer. Analyze execution logs for hidden bugs and return STRICT JSON."
+	// system prompt
+	system := `
+	You are SEC-REPORTER, a structured security assistant.  
+	Your job is to summarize potential vulnerabilities into a single, valid JSON object.  
+	Use precise, professional language similar to HackerOne reports.  
+	Output JSON only — no explanations, no markdown.  
+	If information is missing, set the field to null.  
+	Avoid sensitive data or exploit code.  
+	Follow this schema exactly:
+	{
+		"score": 0..1,
+		"explanation": "<=160 chars",
+		"indicators": ["short phrases"]
+	}
+	`
 
-	var b bytes.Buffer
-	fmt.Fprintln(&b, "You will receive execution logs (compact lines).")
-	fmt.Fprintln(&b, "Infer likelihood that a hidden bug exists, even if no error was thrown.")
-	fmt.Fprintln(&b, "Consider: status flips, retries/timeouts, long durations, inconsistent sequences, masked failures, flaky steps.")
-	fmt.Fprintln(&b, "Return ONLY JSON: {\"score\":0..1,\"explanation\":\"<=160 chars\",\"indicators\":[\"short phrases\"]}")
-	fmt.Fprintln(&b, "")
-	fmt.Fprintln(&b, "Logs:")
+	// user prompt
+	var user bytes.Buffer
+	fmt.Fprintln(&user, "Summarize the following logs into one JSON object using the system schema above.\nLOGS:")
 	for _, e := range logs {
-		fmt.Fprintf(&b, "- ts=%s mod=%s act=%s tgt=%s st=%s dur=%s conf=%.2f :: %s\n",
+		fmt.Fprintf(&user, "- ts=%s mod=%s act=%s tgt=%s st=%s dur=%s conf=%.2f :: %s\n",
 			trimTimestamp(e.Timestamp), safe(e.Module), safe(e.Action), safe(e.Target),
 			safe(e.Status), safe(e.Duration), e.Confidence, truncate(e.Summary, 140))
 	}
 
 	// query LLM
-	resp, err := a.LLM.Complete(ctx, system, b.String())
+	resp, err := a.LLM.Complete(ctx, system, user.String())
 	raw = strings.TrimSpace(resp)
 
 	if err != nil {
