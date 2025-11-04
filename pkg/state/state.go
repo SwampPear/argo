@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 	"strings"
-
+	"sort"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/SwampPear/argo/pkg/settings"
 )
@@ -108,6 +108,7 @@ func (m *Manager) Logs() []LogEntry {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	// filter logs
 	out := make([]LogEntry, 0, len(m.state.Logs))
 	for _, e := range m.state.Logs {
 		if strings.EqualFold(strings.TrimSpace(e.Module), "Analyzer") {
@@ -116,5 +117,16 @@ func (m *Manager) Logs() []LogEntry {
 		
 		out = append(out, e)
 	}
+
+	// order logs by time
+	sort.SliceStable(out, func(i, j int) bool {
+		ti, tj := out[i].Timestamp, out[j].Timestamp
+		if ti != tj {
+			return ti < tj
+		}
+
+		return false
+	})
+
 	return out
 }
