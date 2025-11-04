@@ -3,8 +3,8 @@ package state
 import (
 	"context"
 	"sync"
-	"strings"
 	"fmt"
+	"strings"
 	"sort"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/SwampPear/argo/pkg/settings"
@@ -106,32 +106,37 @@ func (m *Manager) AppendLog(le LogEntry) {
 	runtime.EventsEmit(m.ctx, "log:event", le)
 }
 
-func (m *Manager) AppendLog(le LogEntry) {
-	m.mu.Lock()
-	if le.Step == 0 {
-		m.step++
-		le.Step = m.step
-	}
-	m.state.Logs = append(m.state.Logs, le)
-	m.version++
-	s := m.state
-	s.Version = m.version
-	m.mu.Unlock()
-
-	runtime.EventsEmit(m.ctx, "state:update", s)
-	runtime.EventsEmit(m.ctx, "log:event", le)
-}
-
 // Gets logs for the analyzer.
 func (m *Manager) Logs() []LogEntry {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	// filter logs
+	// filter
+	scopeFilter := m.GetState().ScopeFilter
+	
+	// make an array of the scopes from the state settings
+	assets := m.GetState().Settings.Assets.InScope
+	n := len(assets)
+	scopes := make([]string, 0, n)
+	for i := 0; i < n; i++ {
+		scopes = append(scopes, assets[i].Hostname)
+	}
+	fmt.Println(scopes)
+
 	out := make([]LogEntry, 0, len(m.state.Logs))
 	for _, e := range m.state.Logs {
+		// by type
 		if strings.EqualFold(strings.TrimSpace(e.Module), "Analyzer") {
 			continue
+		}
+
+		// by scope
+		if (scopeFilter) {
+			for i := 0; i < len(scopes); i++ {
+				if strings.Contains(strings.TrimSpace(e.Target), scopes[i]) {
+					break
+				}
+			}
 		}
 		
 		out = append(out, e)

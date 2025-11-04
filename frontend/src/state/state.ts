@@ -35,10 +35,11 @@ type Store = {
   setProjectDir: (dir: string) => Promise<void>
   setSettings: (cfg: settings.Settings) => Promise<void>
   addLog: (le: LogEntry) => Promise<void>
+  setScopeFilter: (sf: boolean) => Promise<void>
+  toggleScopeFilter: () => Promise<void>
   selectProjectDirectory: () => Promise<string>
   loadYAMLSettings: (path: string) => Promise<settings.Settings>
   setPage: (page: AppPage) => void
-  setScopeFilter: (sf: boolean) => Promise<void>
 }
 
 const defaultRemote: RemoteState = {
@@ -48,14 +49,15 @@ const defaultRemote: RemoteState = {
   scopeFilter: false
 }
 
-/** Convert Wails wire AppState (class) -> plain RemoteState */
+// Convert Wails wire AppState (class) -> plain RemoteState.
 function toRemoteState(wire: any): RemoteState {
   if (!wire || typeof wire !== 'object') return defaultRemote
-  // Wails respects json tags, but be tolerant of casing just in case
+  
   const s = wire.settings ?? wire.Settings ?? {}
   const dir = wire.projectDir ?? wire.ProjectDir ?? ''
   const logs = wire.logs ?? wire.Logs ?? []
   const sf = wire.scopeFilter ?? wire.scopeFilter ?? false
+
   return {
     projectDir: String(dir || ''),
     settings: s as settings.Settings,
@@ -64,9 +66,9 @@ function toRemoteState(wire: any): RemoteState {
   }
 }
 
-/** Convert plain RemoteState -> wire shape Wails is happy to JSON-serialize */
+// Convert plain RemoteState to JSON-serializable shape.
 function fromRemoteState(s: RemoteState): any {
-  // json tags in Go are lowerCamelCase, so keep those keys
+  // json tags in Go are lower camel case
   return {
     projectDir: s.projectDir,
     settings: s.settings,
@@ -109,6 +111,12 @@ export const useAppStore = create<Store>((set, get) => ({
   addLog: async (le) =>
     get().applyOptimistic(s => ({ ...s, logs: [...s.logs, le] })),
 
+  setScopeFilter: async (sf) =>
+    get().applyOptimistic(s => ({ ...s, scopeFilter: sf })),
+
+  toggleScopeFilter: async () =>
+    get().applyOptimistic(s => ({ ...s, scopeFilter: !s.scopeFilter })),
+
   selectProjectDirectory: async () => {
     const dir = await backend.SelectProjectDirectory()
     // Backend will emit state:update; no local set needed.
@@ -122,9 +130,6 @@ export const useAppStore = create<Store>((set, get) => ({
   },
 
   setPage: (page) => set({ page }),
-
-  setScopeFilter: async (sf) =>
-    get().applyOptimistic(s => ({ ...s, scopeFilter: sf })),
 }))
 
 
