@@ -19,7 +19,7 @@ const Page = () => {
   const tbodyRef = useRef<HTMLTableSectionElement | null>(null)
 
   const logs = useAppStore(s => s.state.logs)
-  const scopeFilter = useAppStore(s => s.state.scopeFilter)
+  const scopeFilter = useAppStore(s => s.state.scope_filter)
   const settings = useAppStore(s => s.state.settings)
 
   // Prepare a trimmed, render-ready projection

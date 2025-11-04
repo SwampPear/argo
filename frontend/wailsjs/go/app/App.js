@@ -18,8 +18,8 @@ export function SelectProjectDirectory() {
   return window['go']['app']['App']['SelectProjectDirectory']();
 }
 
-export function SetState(arg1, arg2) {
-  return window['go']['app']['App']['SetState'](arg1, arg2);
+export function SetState(arg1) {
+  return window['go']['app']['App']['SetState'](arg1);
 }
 
 export function StartAnalyzer() {

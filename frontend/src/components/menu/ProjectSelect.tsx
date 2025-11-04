@@ -3,7 +3,7 @@ import { LogError, LogInfo } from '@wails/runtime'
 import styles from './Menu.module.css'
 
 const ProjectSelect = () => {
-  const projectDir = useAppStore(s => s.state.projectDir)
+  const projectDir = useAppStore(s => s.state.project_dir)
 
   const selectProjectDirectory = useAppStore(s => s.selectProjectDirectory)
   const loadYAMLSettings = useAppStore(s => s.loadYAMLSettings)

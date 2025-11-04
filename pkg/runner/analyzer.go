@@ -165,11 +165,6 @@ func (a *Analyzer) makeBatches(m *state.Manager, logs []state.LogEntry) [][]stat
 		batches = append(batches, cur)
 	}
 
-	// filter
-	scopeFilter := m.GetState().Settings.LLM.BaseURL
-	fmt.Println(scopeFilter)
-	fmt.Println("sadf")
-
 	return batches
 }
 
@@ -288,8 +283,6 @@ func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score fl
 		return 0.25, "LLM analysis failed", []string{"llm-call-error"}, err.Error()
 	}
 
-	fmt.Println(raw)
-
 	// format report
 	if raw != "" {
 		var rep BugReport
@@ -297,8 +290,6 @@ func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score fl
 			return clamp(rep.Score, 0, 1), strings.TrimSpace(rep.Explanation), cleanIndicators(rep.Indicators), raw
 		}
 	}
-
-	fmt.Println(raw)
 
 	return 0.25, "LLM analysis failed; defaulting to low risk", []string{"llm-call-error"}, raw
 }

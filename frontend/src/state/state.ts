@@ -1,8 +1,9 @@
+import * as backend from '@wails/go/app/App'
+import { settings } from '@wails/go/models'
+import { EventsOn, LogError } from '@wails/runtime/runtime'
 import { create } from 'zustand'
-import * as backend from '../../wailsjs/go/app/App'
-import { settings } from '../../wailsjs/go/models'
-import { EventsOn, LogError } from '../../wailsjs/runtime/runtime'
 
+// Log entry for tool calls, general info, and errors.
 export type LogEntry = {
   step?: number
   id?: string
@@ -17,106 +18,89 @@ export type LogEntry = {
   parent_step_id?: string
 }
 
+// Page routing.
 export type AppPage = 'settings' | 'logs' | 'bugs'
 
+// Shared remote state.
 export type RemoteState = {
-  projectDir: string
+  project_dir: string
   settings: settings.Settings
   logs: LogEntry[]
-  scopeFilter: boolean
+  scope_filter: boolean
 }
 
+// Frontend store.
 type Store = {
   state: RemoteState
-  version: number
   page: AppPage
   setFromServer: (s: RemoteState) => void
   applyOptimistic: (draft: (s: RemoteState) => RemoteState) => Promise<void>
-  setProjectDir: (dir: string) => Promise<void>
-  setSettings: (cfg: settings.Settings) => Promise<void>
   addLog: (le: LogEntry) => Promise<void>
   setScopeFilter: (sf: boolean) => Promise<void>
-  toggleScopeFilter: () => Promise<void>
   selectProjectDirectory: () => Promise<string>
   loadYAMLSettings: (path: string) => Promise<settings.Settings>
   setPage: (page: AppPage) => void
 }
 
 const defaultRemote: RemoteState = {
-  projectDir: '',
+  project_dir: '',
   settings: {} as settings.Settings,
   logs: [],
-  scopeFilter: false
+  scope_filter: false
 }
 
 // Convert Wails wire AppState (class) -> plain RemoteState.
-function toRemoteState(wire: any): RemoteState {
+const toRemoteState = (wire: any): RemoteState => {
   if (!wire || typeof wire !== 'object') return defaultRemote
   
-  const s = wire.settings ?? wire.Settings ?? {}
-  const dir = wire.projectDir ?? wire.ProjectDir ?? ''
-  const logs = wire.logs ?? wire.Logs ?? []
-  const sf = wire.scopeFilter ?? wire.scopeFilter ?? false
+  const s = wire.settings ?? wire.settings ?? {}
+  const dir = wire.project_dir ?? wire.project_dir ?? ''
+  const logs = wire.logs ?? wire.logs ?? []
+  const sf = wire.scope_filter ?? wire.scope_filter ?? false
 
   return {
-    projectDir: String(dir || ''),
+    project_dir: String(dir || ''),
     settings: s as settings.Settings,
     logs: Array.isArray(logs) ? logs as LogEntry[] : [],
-    scopeFilter: sf as boolean
+    scope_filter: sf as boolean
   }
 }
 
 // Convert plain RemoteState to JSON-serializable shape.
-function fromRemoteState(s: RemoteState): any {
-  // json tags in Go are lower camel case
+const fromRemoteState =(s: RemoteState): any => {
   return {
-    projectDir: s.projectDir,
+    project_dir: s.project_dir,
     settings: s.settings,
     logs: s.logs,
-    scopeFilter: s.scopeFilter,
+    scope_filter: s.scope_filter
   }
 }
 
+// Store hook.
 export const useAppStore = create<Store>((set, get) => ({
   state: defaultRemote,
-  version: 0,
   page: 'logs',
-  scopeFilter: false,
   setFromServer: (s) => set({ state: s }),
-
   applyOptimistic: async (draft) => {
-    const { state, version } = get()
+    const { state } = get()
     const next = draft(state)
-    set({ state: next }) // optimistic
+    set({ state: next })
 
-    // Call backend.SetState with a plain object, then normalize the response
-    const resp = await backend.SetState(fromRemoteState(next) as any, version as any)
-    const [wireState, serverVersion, ok] = resp as unknown as [any, number, boolean]
+    // call backend.SetState with a plain object, then normalize the response
+    const resp = await backend.SetState(fromRemoteState(next) as any)
+    const [wireState, ok] = resp as unknown as [any, number, boolean]
 
     if (!ok) {
       const serverState = toRemoteState(wireState)
-      set({ state: serverState, version: serverVersion })
+      set({ state: serverState })
     } else {
       const serverState = toRemoteState(wireState)
-      set({ state: serverState, version: serverVersion })
+      set({ state: serverState })
     }
   },
 
-  setProjectDir: async (dir) =>
-    get().applyOptimistic(s => ({ ...s, projectDir: dir })),
-
-  setSettings: async (cfg) =>
-    get().applyOptimistic(s => ({ ...s, settings: cfg })),
-
-  addLog: async (le) =>
-    get().applyOptimistic(s => ({ ...s, logs: [...s.logs, le] })),
-
-  setScopeFilter: async (sf) =>
-    get().applyOptimistic(s => ({ ...s, scopeFilter: sf })),
-
-  toggleScopeFilter: async () =>
-    get().applyOptimistic(s => ({ ...s, scopeFilter: !s.scopeFilter })),
-
+  addLog: async (le) => get().applyOptimistic(s => ({ ...s, logs: [...s.logs, le] })),
+  setScopeFilter: async (sf) => get().applyOptimistic(s => ({ ...s, scope_filter: sf })),
   selectProjectDirectory: async () => {
     const dir = await backend.SelectProjectDirectory()
     // Backend will emit state:update; no local set needed.
@@ -132,39 +116,38 @@ export const useAppStore = create<Store>((set, get) => ({
   setPage: (page) => set({ page }),
 }))
 
+export const bootstrapState = async () => {
+  const res = await backend.GetState()
 
-export async function bootstrapState() {
-  const api: any = backend as any
-  if (typeof api.GetState !== 'function') {
-    LogError('backend.GetState is not a function. Check your import: wailsjs/go/main/App')
-    return
+  // normalize to an object
+  const normalize = (x: any) => {
+    let obj: any = null
+    if (x && typeof x === 'object' && !Array.isArray(x)) {
+      obj = x
+    } else if (Array.isArray(x) || (x && typeof x === 'object' && '0' in x)) {
+      obj = Array.isArray(x) ? x[0] : x[0]
+    } else {
+      LogError(`Unexpected GetState() return shape: ${JSON.stringify(x)}`)
+      return null
+    }
+    if (!obj || typeof obj !== 'object') return null
+
+    return obj
   }
 
-  const res = await api.GetState()
-
-  // New canonical shape: a single object with version embedded.
-  let wireState: any | null = null
-  if (res && typeof res === 'object' && 'version' in res) {
-    wireState = res
-  } else if (Array.isArray(res) || (res && typeof res === 'object' && '0' in res && '1' in res)) {
-    // Back-compat: old tuple/envelope; hydrate but warn.
-    LogError('Received legacy GetState() shape; update backend to embedded-version AppState.')
-    const s = Array.isArray(res) ? (res as any)[0] : (res as any)[0]
-    const v = Array.isArray(res) ? (res as any)[1] : (res as any)[1]
-    wireState = { ...(s || {}), version: Number(v ?? 0) }
-  } else {
-    LogError(`Unexpected GetState() return shape: ${JSON.stringify(res)}`)
-    return
-  }
+  const wireState = normalize(res)
+  if (!wireState) return
 
   useAppStore.getState().setFromServer(toRemoteState(wireState))
 
-  // Live sync: backend now emits a single AppState payload on "state:update".
+  // state update
   EventsOn('state:update', (nextWire: any) => {
-    if (!nextWire || typeof nextWire !== 'object' || !('version' in nextWire)) {
+    const s = normalize(nextWire)
+    if (!s) {
       LogError(`Ignoring unexpected state:update payload: ${JSON.stringify(nextWire)}`)
       return
     }
-    useAppStore.getState().setFromServer(toRemoteState(nextWire))
+    
+    useAppStore.getState().setFromServer(toRemoteState(s))
   })
 }

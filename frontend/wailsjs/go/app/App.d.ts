@@ -5,13 +5,13 @@ import {settings} from '../models';
 
 export function BroadcastState():Promise<void>;
 
-export function GetState():Promise<state.AppState>;
+export function GetState():Promise<state.RemoteState>;
 
 export function LoadYAMLSettings(arg1:string):Promise<settings.Settings>;
 
 export function SelectProjectDirectory():Promise<string>;
 
-export function SetState(arg1:state.AppState,arg2:number):Promise<state.AppState>;
+export function SetState(arg1:state.RemoteState):Promise<state.RemoteState>;
 
 export function StartAnalyzer():Promise<void>;
 

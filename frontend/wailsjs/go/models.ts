@@ -371,24 +371,22 @@ export namespace state {
 	        this.parent_step_id = source["parent_step_id"];
 	    }
 	}
-	export class AppState {
-	    projectDir: string;
+	export class RemoteState {
+	    project_dir: string;
 	    settings: settings.Settings;
 	    logs: LogEntry[];
-	    version: number;
-	    scopeFilter: boolean;
+	    scope_filter: boolean;
 	
 	    static createFrom(source: any = {}) {
-	        return new AppState(source);
+	        return new RemoteState(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.projectDir = source["projectDir"];
+	        this.project_dir = source["project_dir"];
 	        this.settings = this.convertValues(source["settings"], settings.Settings);
 	        this.logs = this.convertValues(source["logs"], LogEntry);
-	        this.version = source["version"];
-	        this.scopeFilter = source["scopeFilter"];
+	        this.scope_filter = source["scope_filter"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -9,7 +9,7 @@ import (
 	"github.com/SwampPear/argo/pkg/runner"
 )
 
-// App.
+// Application definition.
 type App struct {
 	ctx        context.Context
 	stateMgr   *state.Manager
@@ -17,7 +17,7 @@ type App struct {
 	analyzer   *runner.Analyzer
 }
 
-// Creates a new App instance with initialized subsystems.
+// Initializes a new App instance with new subsystems.
 func New() *App {
 	return &App{
 		stateMgr:   nil,
@@ -33,13 +33,13 @@ func (a *App) Startup(ctx context.Context) {
 }
 
 // Gets current state.
-func (a *App) GetState() state.AppState {
+func (a *App) GetState() state.RemoteState {
 	return a.stateMgr.GetState()
 }
 
 // Sets current state.
-func (a *App) SetState(next state.AppState, baseVersion int64) state.AppState {
-	return a.stateMgr.SetState(next, baseVersion)
+func (a *App) SetState(next state.RemoteState) state.RemoteState {
+	return a.stateMgr.SetState(next)
 }
 
 // Hydrates frontend with current state.
@@ -58,7 +58,7 @@ func (a *App) SelectProjectDirectory() (string, error) {
 
 	s := a.stateMgr.GetState()
 	s.ProjectDir = dir
-	a.stateMgr.SetState(s, s.Version)
+	a.stateMgr.SetState(s)
 
 	return dir, nil
 }
@@ -72,7 +72,7 @@ func (a *App) LoadYAMLSettings(path string) (settings.Settings, error) {
 
 	s := a.stateMgr.GetState()
 	s.Settings = cfg
-	a.stateMgr.SetState(s, s.Version)
+	a.stateMgr.SetState(s)
 
 	return cfg, nil
 }

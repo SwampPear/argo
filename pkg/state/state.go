@@ -10,6 +10,7 @@ import (
 	"github.com/SwampPear/argo/pkg/settings"
 )
 
+// Log entry for tool calls and info.
 type LogEntry struct {
 	Step         int     `json:"step"`
 	ID           string  `json:"id"`
@@ -24,26 +25,27 @@ type LogEntry struct {
 	ParentStepID int     `json:"parent_step_id"`
 }
 
-type AppState struct {
-	ProjectDir  string            `json:"projectDir"`
+// Shared remote state.
+type RemoteState struct {
+	ProjectDir  string            `json:"project_dir"`
 	Settings    settings.Settings `json:"settings"`
 	Logs        []LogEntry        `json:"logs"`
-	Version     int64             `json:"version"`
-	ScopeFilter bool							`json:"scopeFilter"`
+	ScopeFilter bool							`json:"scope_filter"`
 }
 
+// State manager.
 type Manager struct {
 	mu      sync.RWMutex
 	ctx     context.Context
-	state   AppState
-	version int64
-	step    int
+	state   RemoteState
 }
 
+// Initializes a new state manager.
 func New(ctx context.Context) *Manager {
 	return &Manager{
 		ctx: ctx,
-		state: AppState{
+		state: RemoteState{
+			ProjectDir:	 "",
 			Settings: 	 settings.Default(),
 			Logs:     	 make([]LogEntry, 0, 256),
 			ScopeFilter: false,
@@ -51,55 +53,40 @@ func New(ctx context.Context) *Manager {
 	}
 }
 
-// GetState safely returns the current immutable state snapshot.
-func (m *Manager) GetState() AppState {
+// Safely returns current state snapshot.
+func (m *Manager) GetState() RemoteState {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	s := m.state
-	s.Version = m.version
-	return s
+	
+	return m.state
 }
 
-// SetState applies a new version if the base version matches.
-func (m *Manager) SetState(next AppState, baseVersion int64) AppState {
+// Safely applies a new state.
+func (m *Manager) SetState(next RemoteState) RemoteState {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if baseVersion != m.version {
-		s := m.state
-		s.Version = m.version
-		return s
-	}
 	m.state = next
-	m.version++
-	s := m.state
-	s.Version = m.version
-	runtime.EventsEmit(m.ctx, "state:update", s)
-	return s
+
+	runtime.EventsEmit(m.ctx, "state:update", next)
+
+	return next
 }
 
 // Hydrates the frontend with current state.
 func (m *Manager) Broadcast() {
 	m.mu.RLock()
 	s := m.state
-	v := m.version
 	m.mu.RUnlock()
 
-	s.Version = v
 	runtime.EventsEmit(m.ctx, "state:update", s)
 }
 
-// AppendLog adds a log entry and emits an update event.
+// Adds a log entry and emits an update event.
 func (m *Manager) AppendLog(le LogEntry) {
 	m.mu.Lock()
-	if le.Step == 0 {
-		m.step++
-		le.Step = m.step
-	}
 	m.state.Logs = append(m.state.Logs, le)
-	m.version++
 	s := m.state
-	s.Version = m.version
 	m.mu.Unlock()
 
 	runtime.EventsEmit(m.ctx, "state:update", s)
@@ -112,17 +99,17 @@ func (m *Manager) Logs() []LogEntry {
 	defer m.mu.RUnlock()
 
 	// filter
-	scopeFilter := m.GetState().ScopeFilter
+	scopeFilter := m.state.ScopeFilter
 	
-	// make an array of the scopes from the state settings
-	assets := m.GetState().Settings.Assets.InScope
+	// array of the scopes from the state settings
+	assets := m.state.Settings.Assets.InScope
 	n := len(assets)
 	scopes := make([]string, 0, n)
 	for i := 0; i < n; i++ {
 		scopes = append(scopes, assets[i].Hostname)
 	}
-	fmt.Println(scopes)
 
+	// filter logs
 	out := make([]LogEntry, 0, len(m.state.Logs))
 	for _, e := range m.state.Logs {
 		// by type
@@ -131,14 +118,20 @@ func (m *Manager) Logs() []LogEntry {
 		}
 
 		// by scope
-		if (scopeFilter) {
-			for i := 0; i < len(scopes); i++ {
-				if strings.Contains(strings.TrimSpace(e.Target), scopes[i]) {
-					break
-				}
+		if scopeFilter {
+			t := strings.TrimSpace(e.Target)
+			match := false
+			for _, host := range scopes {
+					if strings.Contains(t, host) {
+							match = true
+							break
+					}
+			}
+			if !match {
+					continue
 			}
 		}
-		
+
 		out = append(out, e)
 	}
 
