@@ -85,10 +85,8 @@ func (m *Manager) Broadcast() {
 func (m *Manager) AppendLog(le LogEntry) {
 	m.mu.Lock()
 	m.state.Logs = append(m.state.Logs, le)
-	s := m.state
 	m.mu.Unlock()
 
-	runtime.EventsEmit(m.ctx, "state:update", s)
 	runtime.EventsEmit(m.ctx, "log:event", le)
 }
 
