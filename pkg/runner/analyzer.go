@@ -101,13 +101,7 @@ func (a *Analyzer) Start(m *state.Manager) error {
 		score, explanation, indicators, raw := a.callLLM(ctx, batch)
 
 		// status
-		status := "LOW"
-		switch {
-		case score >= a.ErrThreshold:
-			status = "MID"
-		case score >= a.WarnThreshold:
-			status = "HIGH"
-		}
+		status := "OK"
 
 		// summary
 		summary := fmt.Sprintf(
@@ -122,7 +116,7 @@ func (a *Analyzer) Start(m *state.Manager) error {
 		log(m, "batchComplete", status, summary, fmt.Sprintf("%d-logs", len(batch)), time.Since(bStart).String(), 
 				clamp(score, 0, 1))
 
-		fmt.Println(summary)
+		fmt.Println(raw)
 	}
 
 	log(m, "complete", "OK", "Analyzation complete.", fmt.Sprintf("%d-logs", len(logs)), 

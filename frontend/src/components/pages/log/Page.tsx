@@ -78,10 +78,10 @@ const Page = () => {
             <th style={{ width: '10%' }}>Module</th>
             <th style={{ width: '8%' }}>Action</th>
             <th style={{ width: '12%' }}>Target</th>
-            <th style={{ width: '6%' }}>Status</th>
+            <th style={{ width: '8%' }}>Status</th>
             <th style={{ width: '6%' }}>Dur</th>
             <th style={{ width: '6%' }}>Conf</th>
-            <th style={{ width: '28%' }}>Summary</th>
+            <th style={{ width: '26%' }}>Summary</th>
             <th style={{ width: '6%' }}>Parent</th>
           </tr>
         </thead>
@@ -93,12 +93,12 @@ const Page = () => {
               <Cell width={10}>{r.module}</Cell>
               <Cell width={8}>{r.action}</Cell>
               <Cell width={12}>{r.target}</Cell>
-              <Cell width={6}>
+              <Cell width={8}>
                 <span className={`status ${String(r.status).toLowerCase()}`}>{r.status}</span>
               </Cell>
               <Cell width={6}>{r.duration}</Cell>
               <Cell width={6}>{r.confidence.toFixed(2)}</Cell>
-              <Cell width={28}>{r.summary}</Cell>
+              <Cell width={26}>{r.summary}</Cell>
               <Cell width={6}>{r.parent_step_id}</Cell>
             </tr>
           ))}
