@@ -248,15 +248,14 @@ func cleanIndicators(in []string) []string {
 func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score float64, explanation string, indicators []string, raw string) {
 	// system prompt
 	system := `
-	You are SEC-REPORTER, a structured security assistant.  
-	Your job is to summarize potential vulnerabilities into a single, valid JSON object.  
-	Use precise, professional language similar to HackerOne reports.  
-	Output JSON only — no explanations, no markdown.  
-	If information is missing, set the field to null.  
-	Avoid sensitive data or exploit code.  
+	You are SEC-REPORTER, a structured security assistant. Your job is to summarize potential vulnerabilities into a 
+	single, valid JSON object. Use precise, professional language similar to HackerOne reports. Your report should contain
+	a brief exploit vector. You should also give a brief score for how actionable and vulnerable the code may be. Output 
+	JSON only — no explanations, no markdown. If information is missing, set the field to the default value for the data 
+	type. Avoid sensitive data.
 	Follow this schema exactly:
 	{
-		"score": 0..1,
+		"score": 0.0-1.0,
 		"explanation": "<=160 chars",
 		"indicators": ["short phrases"]
 	}
@@ -264,7 +263,7 @@ func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score fl
 
 	// user prompt
 	var user bytes.Buffer
-	fmt.Fprintln(&user, "Summarize the following logs into one JSON object using the system schema above.\nLOGS:")
+	fmt.Fprintln(&user, "Summarize the following logs into one JSON object using the system schema above.\n LOGS:")
 	for _, e := range logs {
 		fmt.Fprintf(&user, "- ts=%s mod=%s act=%s tgt=%s st=%s dur=%s conf=%.2f :: %s\n",
 			trimTimestamp(e.Timestamp), safe(e.Module), safe(e.Action), safe(e.Target),
