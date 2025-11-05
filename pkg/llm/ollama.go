@@ -1,4 +1,4 @@
-package runner
+package llm
 
 import (
 	"bytes"
@@ -9,13 +9,29 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"github.com/SwampPear/argo/pkg/state"
 )
 
+// Ollama LLM client.
 type OllamaClient struct {
-	BaseURL     string  // e.g. "http://localhost:11434"
-	Model       string
-	Timeout     time.Duration // e.g. 120 * time.Second
+	BaseURL     string  		  // e.g. "http://localhost:11434"
+	Model       string				// model name
+	Timeout     time.Duration // e120 * time.Second
 	Temperature float64       // e.g. 0.4
+}
+
+// Initializes Ollama llm client.
+func (c *OllamaClient) Init(m *state.Manager) error {
+	cfg := m.GetState().Settings.LLM
+
+	c = &OllamaClient{
+		BaseURL:     cfg.BaseURL,
+		Model:       cfg.Model,
+		Temperature: cfg.Temperature,
+		Timeout:     time.Duration(cfg.Timeout),
+	}
+
+	return nil
 }
 
 func (c *OllamaClient) Complete(ctx context.Context, system, prompt string) (string, error) {

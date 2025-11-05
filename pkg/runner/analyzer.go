@@ -9,21 +9,20 @@ import (
 	"bytes"
 
 	"github.com/SwampPear/argo/pkg/state"
+	"github.com/SwampPear/argo/pkg/llm"
 )
 
-type LLMClient interface {
-	Complete(ctx context.Context, system, prompt string) (string, error)
-}
-
+// Analyzer object.
 type Analyzer struct {
-	LLM 							 LLMClient // abstract LLM interface
-	MaxTokensPerBatch  int	   	 // batching parameter 		 (1800)
-	MaxLogsPerBatch    int     	 // batching parameter 		 (120)
-	ApproxTokensPerLog int     	 // heuristic for batching (16)
-	WarnThreshold 		 float64 	 // status threshold 			 (0.60)
-	ErrThreshold  		 float64 	 // status threshold 			 (0.85)
+	LLM 							 llm.LLMClient // abstract LLM interface
+	MaxTokensPerBatch  int	   	 		 // batching parameter 		 (1800)
+	MaxLogsPerBatch    int     	 		 // batching parameter 		 (120)
+	ApproxTokensPerLog int     	 		 // heuristic for batching (16)
+	WarnThreshold 		 float64 	 		 // status threshold 			 (0.60)
+	ErrThreshold  		 float64 	 		 // status threshold 			 (0.85)
 }
 
+// TODO: beef up
 type BugReport struct {
 	Score       float64  `json:"score"`
 	Explanation string   `json:"explanation"`
@@ -32,6 +31,7 @@ type BugReport struct {
 
 // Emits an analyzer event.
 func log(m *state.Manager, action string, status string, summary string, target string, duration string, confidence float64) {
+	// defaults
 	if target == "" {
 		target = "-"
 	}
@@ -42,6 +42,7 @@ func log(m *state.Manager, action string, status string, summary string, target 
 		confidence = 1.0
 	}
 
+	// append log to state
 	m.AppendLog(state.LogEntry{
 		Timestamp:  time.Now().UTC().Format(time.RFC3339Nano),
 		Module:     "Analyzer",
@@ -164,26 +165,16 @@ func (a *Analyzer) makeBatches(m *state.Manager, logs []state.LogEntry) [][]stat
 	return batches
 }
 
-// Initializes Ollama client.
-func (a *Analyzer) initOllamaClient(m *state.Manager) error {
-	cfg := m.GetState().Settings.LLM
-
-	a.LLM = &OllamaClient{
-		BaseURL:     cfg.BaseURL,
-		Model:       cfg.Model,
-		Temperature: cfg.Temperature,
-		Timeout:     time.Duration(cfg.Timeout),
-	}
-
-	return nil
-}
-
 // Ensures LLM is configured on analyzation start.
 func (a *Analyzer) ensureLLM(m *state.Manager) error {
+	// check for initialized LLM
 	if a.LLM != nil {
 		return nil
 	}
-	if err := a.initOllamaClient(m); err != nil {
+
+	c := &llm.OllamaClient{}
+
+	if err := c.Init(m); err != nil {
 		return err
 	}
 
@@ -252,7 +243,7 @@ func (a *Analyzer) callLLM(ctx context.Context, logs []state.LogEntry) (score fl
 	single, valid JSON object. Use precise, professional language similar to HackerOne reports. Your report should contain
 	a brief exploit vector. You should also give a brief score for how actionable and vulnerable the code may be. Output 
 	JSON only — no explanations, no markdown. If information is missing, set the field to the default value for the data 
-	type. Avoid sensitive data.
+	type. Avoid sensitive data. You should be scrutinous in your scoring and should focus on web bugs.
 	Follow this schema exactly:
 	{
 		"score": 0.0-1.0,

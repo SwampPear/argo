@@ -1,0 +1,1 @@
+- incorporate scope notes into analysis context

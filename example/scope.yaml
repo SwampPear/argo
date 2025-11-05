@@ -8,9 +8,9 @@ llm:
   temperature: 0.3
 
 program:
-  client: "ripio"
+  client: "gitlab"
   contact: ""
-  notes: "Multiple vulnerabilities caused by one underlying issue will be awarded one bounty. Social engineering (e.g. phishing, vishing, smishing) is prohibited. Make a good faith effort to avoid privacy violations, destruction of data, and interruption or degradation of our service. Only interact with accounts you own or with the explicit permission of the account holder. Any vulnerability reports on Ripio integration with third parties will not be applicable for reward."
+  notes: ""
 
 rules:
   allowed_http_methods: [GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE]
@@ -37,19 +37,10 @@ rate_limits:
 assets:
   in_scope:
     - mode: web
-      hostname: trade.ripio.com
+      hostname: registry.gitlab.com
       paths: ["/"]
     - mode: web
-      hostname: https://kyc.ripio.com/
-      paths: ["/"]
-    - mode: web
-      hostname: http://auth.ripio.com
-      paths: ["/"]
-    - mode: web
-      hostname: defi.ripio.com
-      paths: ["/"]
-    - mode: web
-      hostname: app.ripio.com
+      hostname: gitlab.com
       paths: ["/"]
   out_of_scope:
 
