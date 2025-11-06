@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"io"
-
 	"github.com/SwampPear/argo/pkg/state"
 )
 
+// Processes stream from Playwright runner.
 func Stream(r io.Reader, append func(state.LogEntry)) {
 	sc := bufio.NewScanner(r)
 	buf := make([]byte, 0, 64*1024)

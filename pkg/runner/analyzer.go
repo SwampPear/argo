@@ -29,39 +29,15 @@ type BugReport struct {
 	Indicators  []string `json:"indicators,omitempty"`
 }
 
-// Emits an analyzer event.
-func log(m *state.Manager, action string, status string, summary string, target string, duration string, confidence float64) {
-	// defaults
-	if target == "" {
-		target = "-"
-	}
-	if duration == "" {
-		target = "0ms"
-	}
-	if confidence == 0 {
-		confidence = 1.0
-	}
-
-	// append log to state
-	m.AppendLog(state.LogEntry{
-		Timestamp:  time.Now().UTC().Format(time.RFC3339Nano),
-		Module:     "Analyzer",
-		Action:     action,
-		Target:     "-",
-		Status:     status,
-		Duration:   "0ms",
-		Confidence: 1.0,
-		Summary:    summary,
-	})
-}
-
 // Starts the analyzer (single pass, no streaming).
 func (a *Analyzer) Start(m *state.Manager) error {
 	// start message
 	log(m, "start", "OK", "Analyzer started.", "", "", 0)
 	
-	// ensure llm exists in context
-	a.ensureLLM(m)
+	// initialize llm
+	if err := a.initLLM(m); err != nil {
+		log(m, "error", "ERR", err.Error(), "", "", 0)
+	}
 
 	// defaults
 	if a.MaxTokensPerBatch <= 0 {
@@ -126,6 +102,32 @@ func (a *Analyzer) Start(m *state.Manager) error {
 	return nil
 }
 
+// Emits an analyzer event.
+func log(m *state.Manager, action string, status string, summary string, target string, duration string, confidence float64) {
+	// defaults
+	if target == "" {
+		target = "-"
+	}
+	if duration == "" {
+		target = "0ms"
+	}
+	if confidence == 0 {
+		confidence = 1.0
+	}
+
+	// append log to state
+	m.AppendLog(state.LogEntry{
+		Timestamp:  time.Now().UTC().Format(time.RFC3339Nano),
+		Module:     "Analyzer",
+		Action:     action,
+		Target:     "-",
+		Status:     status,
+		Duration:   "0ms",
+		Confidence: 1.0,
+		Summary:    summary,
+	})
+}
+
 // Computer max lines per batch.
 func (a *Analyzer) maxLines() int {
 	maxLines := a.MaxTokensPerBatch / a.ApproxTokensPerLog
@@ -145,37 +147,41 @@ func (a *Analyzer) makeBatches(m *state.Manager, logs []state.LogEntry) [][]stat
 
 	maxLines := a.maxLines()
 	
-	// slice
-	cur := make([]state.LogEntry, 0, maxLines)
-	var curCount int
+	// slice batches
+	var count int
+	batch := make([]state.LogEntry, 0, maxLines)
 	for _, e := range logs {
-		cur = append(cur, e)
-		curCount++
-		if curCount >= maxLines {
-			batches = append(batches, cur)
-			cur = make([]state.LogEntry, 0, maxLines)
-			curCount = 0
+		batch = append(batch, e)
+		count++
+
+		// batch full
+		if count >= maxLines {
+			batches = append(batches, batch)
+			batch = make([]state.LogEntry, 0, maxLines)
+			count = 0
 		}
 	}
 
-	if len(cur) > 0 {
-		batches = append(batches, cur)
+	// final batch
+	if len(batch) > 0 {
+		batches = append(batches, batch)
 	}
 
 	return batches
 }
 
 // Ensures LLM is configured on analyzation start.
-func (a *Analyzer) ensureLLM(m *state.Manager) error {
-	// check for initialized LLM
-	if a.LLM != nil {
-		return nil
-	}
+func (a *Analyzer) initLLM(m *state.Manager) error {
+	cfg := m.GetState().Settings.LLM
 
-	c := &llm.OllamaClient{}
-
-	if err := c.Init(m); err != nil {
-		return err
+	switch cfg.Provider {
+	case "ollama":
+		c := &llm.OllamaClient{}
+		if err := c.Init(m); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("Invalid config provider: %s", cfg.Provider)
 	}
 
 	return nil

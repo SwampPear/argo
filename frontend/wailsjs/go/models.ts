@@ -350,7 +350,6 @@ export namespace state {
 	    duration: string;
 	    confidence: number;
 	    summary: string;
-	    parent_step_id: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new LogEntry(source);
@@ -368,7 +367,6 @@ export namespace state {
 	        this.duration = source["duration"];
 	        this.confidence = source["confidence"];
 	        this.summary = source["summary"];
-	        this.parent_step_id = source["parent_step_id"];
 	    }
 	}
 	export class RemoteState {

@@ -42,7 +42,6 @@ const Page = () => {
     }
     
     return filtered.map((l, i) => {
-      const parent = (l as any)?.parent_step_id ?? '-'
       return {
         _key: String(l.step ?? l.id ?? i), // prefer step, then id, then index
         index: i,
@@ -53,8 +52,7 @@ const Page = () => {
         status: (l.status ?? '-'),
         duration: l.duration ?? '-',
         confidence: typeof l.confidence === 'number' ? l.confidence : Number(l.confidence ?? 0),
-        summary: l.summary ?? '-',
-        parent_step_id: parent
+        summary: l.summary ?? '-'
       }
     })
   }, [logs, scopeFilter])
@@ -81,8 +79,7 @@ const Page = () => {
             <th style={{ width: '8%' }}>Status</th>
             <th style={{ width: '6%' }}>Dur</th>
             <th style={{ width: '6%' }}>Conf</th>
-            <th style={{ width: '26%' }}>Summary</th>
-            <th style={{ width: '6%' }}>Parent</th>
+            <th style={{ width: '32%' }}>Summary</th>
           </tr>
         </thead>
         <tbody ref={tbodyRef}>
@@ -99,7 +96,6 @@ const Page = () => {
               <Cell width={6}>{r.duration}</Cell>
               <Cell width={6}>{r.confidence.toFixed(2)}</Cell>
               <Cell width={26}>{r.summary}</Cell>
-              <Cell width={6}>{r.parent_step_id}</Cell>
             </tr>
           ))}
         </tbody>

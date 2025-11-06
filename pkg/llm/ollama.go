@@ -14,7 +14,7 @@ import (
 
 // Ollama LLM client.
 type OllamaClient struct {
-	BaseURL     string  		  // e.g. "http://localhost:11434"
+	BaseURL     string  		  // local api root url ("http://localhost:11434")
 	Model       string				// model name
 	Timeout     time.Duration // e120 * time.Second
 	Temperature float64       // e.g. 0.4
@@ -35,6 +35,7 @@ func (c *OllamaClient) Init(m *state.Manager) error {
 }
 
 func (c *OllamaClient) Complete(ctx context.Context, system, prompt string) (string, error) {
+	// request body
 	type msg struct{ Role, Content string }
 	payload := map[string]any{
 		"model":   c.Model,
@@ -48,27 +49,32 @@ func (c *OllamaClient) Complete(ctx context.Context, system, prompt string) (str
 		},
 	}
 
+	// json parse request body
 	b, err := json.Marshal(payload)
 	if err != nil { return "", err }
 
+	// request url
 	chatURL, err := url.JoinPath(c.BaseURL, "/api/chat")
 	if err != nil { return "", err }
 
+	// make request
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, chatURL, bytes.NewReader(b))
 	if err != nil { return "", err }
 	req.Header.Set("Content-Type", "application/json")
 
+	// send request
 	httpClient := &http.Client{}
 	resp, err := httpClient.Do(req)
 	if err != nil { return "", err }
 	defer resp.Body.Close()
 
-	// Handle non-200 with helpful message
+	// error
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		return "", fmt.Errorf("ollama %s: %s", resp.Status, string(body))
 	}
 
+	// output
 	var out struct {
 		Message struct{ Content string } `json:"message"`
 		Error   string                   `json:"error"`

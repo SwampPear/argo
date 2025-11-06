@@ -21,7 +21,6 @@ type LogEntry struct {
 	Duration     string  `json:"duration"`
 	Confidence   float64 `json:"confidence"`
 	Summary      string  `json:"summary"`
-	ParentStepID int     `json:"parent_step_id"`
 }
 
 // Shared remote state.
